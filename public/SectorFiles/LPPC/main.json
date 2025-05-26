@@ -1,0 +1,27 @@
+{
+  "id": "LPPC",
+  "name": "Lisboa FIR",
+  "description": "Lisboa FIR sector file",
+  "version": "1.0",
+  "author": "Tico",
+  "data": {
+    "center-cords": {
+        "lat": "N038.36.33.000",
+        "lon": "W028.06.03.000"
+    },
+    "mag-var": 0.0,
+    "ratio": {
+      "lat": 1,
+      "lon": 1
+    },
+    "airports": "data/airports.json",
+    "airspaces": "data/airspaces.json",
+    "navaids": {
+        "VOR" : "data/navaids/vor.json",
+        "NDB" : "data/navaids/ndb.json",
+        "Airways" : "data/navaids/airways.json",
+        "Fixs": "data/navaids/fixs.json"
+    },
+    "atcs": "data/atcs.json"
+  }
+}
