@@ -1,5 +1,5 @@
 <template>
-<canvas ref="radar" class="radar-canvas"></canvas>
+<canvas ref="radar" class="radar-canvas" :style="{ background: colorScheme.background || 'var(--color-background)' }"></canvas>
 </template>
 
 <script setup>
@@ -8,6 +8,7 @@ import { onMounted, ref, onBeforeUnmount } from 'vue'
 const radar = ref(null)
 
 let sectorFile
+let colorScheme = {}
 
 let needsRedraw = false
 let drawing = false
@@ -21,40 +22,39 @@ let offsetY = 0
 let scale = 1
 
 function hmsToDecimal(coord) {
-    if (typeof coord === 'number') return coord
+    if (typeof coord === 'number') return coord;
 
-    let match = coord.match(/^([NSWE])(\d{3})\.(\d{2})\.(\d{2})(?:\.(\d{2,3}))?(?:\.(\d{3}))?$/)
-    if (!match) return NaN
-    const [, dir, deg, min, sec, dec, mil] = match
-    let decimal = Number(deg) + Number(min) / 60 + Number(sec) / 3600 +
-        (dec ? Number(dec) / 360000 : 0) +
-        (mil ? Number(mil) / 3600000 : 0)
+    const match = coord.match(/^([NSWE])(\d{2,3})\.(\d{2})\.(\d{2})(?:\.(\d{3}))?$/);
+    if (!match) return NaN;
 
-    if (dir === 'S' || dir === 'W') decimal *= -1
-    return decimal
+    const [, dir, deg, min, sec, milli = "0"] = match;
+
+    let decimal = Number(deg) + Number(min) / 60 + (Number(sec) + Number(milli) / 1000) / 3600;
+
+    if (dir === 'S' || dir === 'W') decimal *= -1;
+    return decimal;
 }
 
 // Recebe lat/lon em graus, centro em graus, devolve x/y em NM (ou px se multiplicares por escala)
 function auroraProjection(
     lat,
     lon,
-    centerLat,
-    centerLon,
+    centerLat = 0,
+    centerLon = 0,
     magVar = 0,
     verticalRatio = 1,
     horizontalRatio = 1
 ) {
     const toRad = deg => deg * Math.PI / 180
-    // 1 NM ≈ 1/60 grau latitude
-    const nmPerDeg = 60
+    const nmPerDegLat = 60
+    const nmPerDegLon = 60 * Math.cos(toRad(centerLat))
 
-    // Diferença em graus
     const dLat = lat - centerLat
     const dLon = lon - centerLon
 
     // Corrige longitude pelo cosseno da latitude central
-    const x = dLon * Math.cos(toRad(centerLat)) * nmPerDeg * horizontalRatio
-    const y = -dLat * nmPerDeg * verticalRatio // y invertido para canvas
+    const x = dLon * nmPerDegLon * horizontalRatio
+    const y = -dLat * nmPerDegLat * verticalRatio // y invertido para canvas
 
     // Aplica rotação pela variação magnética (magVar em graus)
     if (magVar && magVar !== 0) {
@@ -116,63 +116,93 @@ async function loadSectorFile(basePath, file) {
     }
 }
 
+function resolveColor(val) {
+    if (typeof val === 'string' && val.startsWith('@')) {
+        const key = val.slice(1)
+        return colorScheme[key] || val
+    }
+    return val
+}
+
+function renderPolygons(groups, center, sectorData) {
+    if (!Array.isArray(groups)) return;
+
+    // Ordena pelo zindex se existir
+    groups = [...groups].sort((a, b) => (a.zindex ?? 0) - (b.zindex ?? 0));
+
+    groups.forEach(group => {
+        if (scale < group.minzoom) return;
+        if (Array.isArray(group.data)) {
+            group.data.forEach(area => {
+                if (area.cords && Array.isArray(area.cords)) {
+                    ctx.beginPath();
+                    area.cords.forEach((cord, idx) => {
+                        const { x, y } = auroraProjection(
+                            hmsToDecimal(cord.lat),
+                            hmsToDecimal(cord.lon),
+                            hmsToDecimal(center.lat),
+                            hmsToDecimal(center.lon),
+                            sectorData["mag-var"],
+                            sectorData["ratio"].lat,
+                            sectorData["ratio"].lon
+                        );
+                        if (idx === 0) {
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    });
+                    // Fill
+                    if (area["fill-color"]) {
+                        ctx.save();
+                        ctx.fillStyle = resolveColor(area["fill-color"]);
+                        ctx.globalAlpha = area["fill-opacity"];
+                        ctx.fill();
+                        ctx.globalAlpha = 1;
+                        ctx.restore();
+                    }
+                    // Stroke
+                    ctx.save();
+                    ctx.strokeStyle = resolveColor(area["line-color"]);
+                    ctx.lineWidth = (area.width || 1) / scale;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+            });
+        }
+    });
+}
+
 function draw() {
-    ctx.save()
-    ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY)
+    ctx.save();
+    ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
     ctx.clearRect(
         (-offsetX) / scale,
         (-offsetY) / scale,
         ctx.canvas.width / scale,
         ctx.canvas.height / scale
-    )
+    );
 
-    // Renderiza airspaces se sectorFile estiver carregado
+    // Renderiza airspaces
     if (sectorFile && sectorFile.data && sectorFile.data.airspaces) {
-        const center = sectorFile.data["center-cords"]
-        const airspaces = sectorFile.data.airspaces
-        airspaces.forEach(airspaceGroup => {
-            // airspaceGroup.data é agora um array de áreas
-            if (Array.isArray(airspaceGroup.data)) {
-                airspaceGroup.data.forEach(area => {
-                    if (area.cords && Array.isArray(area.cords)) {
-                        ctx.beginPath()
-                        area.cords.forEach((cord, idx) => {
-                            const { x, y } = auroraProjection(
-                                hmsToDecimal(cord.lat),
-                                hmsToDecimal(cord.lon),
-                                hmsToDecimal(center.lat),
-                                hmsToDecimal(center.lon),
-                                sectorFile.data["mag-var"],
-                                sectorFile.data["ratio"].lat,
-                                sectorFile.data["ratio"].lon
-                            )
-                            if (idx === 0) {
-                                ctx.moveTo(x, y)
-                            } else {
-                                ctx.lineTo(x, y)
-                            }
-                        })
-                        // Suporta cor e largura por área
-                        ctx.strokeStyle = area["line-color"] || "#00f"
-                        ctx.lineWidth = area.width || 1
-                        ctx.stroke()
-                        // Se quiseres preencher a área:
-                        if (area["fill-color"]) {
-                            ctx.fillStyle = area["fill-color"]
-                            ctx.globalAlpha = 0.2
-                            ctx.fill()
-                            ctx.globalAlpha = 1
-                        }
-                    }
-                })
-            }
-        })
+        const center = sectorFile.data["center-cords"];
+        renderPolygons(sectorFile.data.airspaces, center, sectorFile.data);
     }
 
-    ctx.restore()
+    // Renderiza ground dos airports (se existir)
+    if (sectorFile && sectorFile.data && sectorFile.data.airports) {
+        const center = sectorFile.data["center-cords"];
+        sectorFile.data.airports.forEach(airport => {
+            if (airport.ground) {
+                renderPolygons(airport.ground, center, sectorFile.data);
+            }
+        });
+    }
+
+    ctx.restore();
     if (needsRedraw) {
-        needsRedraw = false
-        scheduleDraw()
+        needsRedraw = false;
+        scheduleDraw();
     }
 }
 
@@ -218,18 +248,23 @@ function onMouseUp() {
 function onWheel(e) {
     e.preventDefault()
     const canvas = radar.value
-    // Posição do mouse relativa ao canvas
     const rect = canvas.getBoundingClientRect()
-    const mouseX = (e.clientX - rect.left - offsetX) / scale
-    const mouseY = (e.clientY - rect.top - offsetY) / scale
+    // Posição do mouse relativa ao canvas (em pixels)
+    const mouseX = e.clientX - rect.left
+    const mouseY = e.clientY - rect.top
+
+    // Posição do mouse no sistema de coordenadas do canvas antes do zoom
+    const wx = (mouseX - offsetX) / scale
+    const wy = (mouseY - offsetY) / scale
 
     // Zoom in/out
     const zoom = e.deltaY < 0 ? 1.1 : 0.9
-    scale *= zoom
+    const newScale = scale * zoom
 
-    // Ajusta o offset para manter o ponto sob o mouse fixo
-    offsetX -= (mouseX * zoom - mouseX) * scale
-    offsetY -= (mouseY * zoom - mouseY) * scale
+    // Atualiza o offset para manter o ponto sob o mouse fixo
+    offsetX = mouseX - wx * newScale
+    offsetY = mouseY - wy * newScale
+    scale = newScale
 
     scheduleDraw()
 }
@@ -247,6 +282,9 @@ onMounted(async () => {
 
     try {
         sectorFile = await loadSectorFile('/SectorFiles/LPPC/', 'main.json')
+        if (sectorFile) {
+            colorScheme = sectorFile.data['colorscheme']
+        }
         resizeCanvas()
         console.log(sectorFile)
     } catch (e) {

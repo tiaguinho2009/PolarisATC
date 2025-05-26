@@ -14,6 +14,7 @@
       "lat": 1,
       "lon": 1
     },
+    "colorscheme": "data/colorscheme.json",
     "airports": "data/airports.json",
     "airspaces": "data/airspaces.json",
     "navaids": {
