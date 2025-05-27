@@ -281,7 +281,7 @@ onMounted(async () => {
     canvas.addEventListener('wheel', onWheel, { passive: false })
 
     try {
-        sectorFile = await loadSectorFile('/SectorFiles/LPPC/', 'main.json')
+        sectorFile = await loadSectorFile('/SectorFiles/LPPO/', 'main.json')
         if (sectorFile) {
             colorScheme = sectorFile.data['colorscheme']
 

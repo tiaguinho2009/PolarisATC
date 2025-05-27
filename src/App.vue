@@ -4,9 +4,6 @@ import RadarCanvas from './components/RadarCanvas.vue'
 import PositionPanel from './components/Position.vue'
 import ConfigPanel from './components/Config.vue'
 
-const PANEL_WIDTH = 300
-const PANEL_HEIGHT = 200
-
 const showPositionPanel = ref(false)
 const showConfigPanel = ref(false)
 
@@ -43,7 +40,6 @@ function updatePanelPosition(panel, newPos) {
       <button class="nav-btn" @click="turnPositionPanel">Position</button>
       <button class="nav-btn">Flight Plan</button>
       <button class="nav-btn">Strips</button>
-      <button class="nav-btn">ATIS</button>
       <button class="nav-btn" @click="turnConfigPanel">Config</button>
     </nav>
   </header>
