@@ -1,20 +1,37 @@
 <script setup>
+import { ref } from 'vue'
 import RadarCanvas from './components/RadarCanvas.vue'
+import PositionPanel from './components/Position.vue'
+import ConfigPanel from './components/Config.vue'
+
+const showPositionPanel = ref(false)
+const showConfigPanel = ref(false)
+
+function turnPositionPanel() {
+  showPositionPanel.value = !showPositionPanel.value
+}
+
+function turnConfigPanel() {
+  showConfigPanel.value = !showConfigPanel.value
+}
+
 </script>
 
 <template>
   <header class="main-header">
     <img alt="Logo" class="logo" src="./assets/logo.svg" width="48" height="48" />
     <nav>
-      <button class="nav-btn">Position</button>
+      <button class="nav-btn" @click="turnPositionPanel">Position</button>
       <button class="nav-btn">Flight Plan</button>
       <button class="nav-btn">Strips</button>
       <button class="nav-btn">ATIS</button>
-      <button class="nav-btn">Config</button>
+      <button class="nav-btn" @click="turnConfigPanel">Config</button>
     </nav>
   </header>
   <main class="main-content">
     <RadarCanvas />
+    <PositionPanel v-if="showPositionPanel" @close="turnPositionPanel" />
+    <ConfigPanel v-if="showConfigPanel" @close="turnConfigPanel" />
   </main>
 </template>
 
@@ -54,7 +71,6 @@ nav {
   width: 100vw;
   height: calc(100vh - 50px);
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  position: relative;
 }
 </style>

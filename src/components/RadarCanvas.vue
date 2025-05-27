@@ -284,6 +284,19 @@ onMounted(async () => {
         sectorFile = await loadSectorFile('/SectorFiles/LPPC/', 'main.json')
         if (sectorFile) {
             colorScheme = sectorFile.data['colorscheme']
+
+            // Centraliza o canvas no center-cords
+            const center = sectorFile.data["center-cords"]
+            if (center) {
+                const { x, y } = auroraProjection(
+                    hmsToDecimal(center.lat),
+                    hmsToDecimal(center.lon),
+                    hmsToDecimal(center.lat),
+                    hmsToDecimal(center.lon)
+                )
+                offsetX = canvas.width / 2 - x * scale
+                offsetY = canvas.height / 2 - y * scale
+            }
         }
         resizeCanvas()
         console.log(sectorFile)
