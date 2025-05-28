@@ -11,11 +11,10 @@
       <div class="config-panel-content">
       <div class="config-row">
         <label for="sector-select">Sector File:</label>
-        <select id="sector-select" v-model="selectedSector">
-          <option v-for="sector in sectorFiles" :key="sector.value" :value="sector.value">
-            {{ sector.label }}
-          </option>
-        </select>
+        <CustomDropdown
+            :options="sectorFiles"
+            v-model="selectedSector"
+          />
       </div>
       <div class="config-row">
         <label for="theme-select">Theme:</label>
@@ -38,6 +37,7 @@
 <script setup>
 import { ref } from 'vue'
 import Panel from './Panel.vue'
+import CustomDropdown from './CustomDropdown.vue'
 
 const props = defineProps({
   position: { type: Object, required: true }
