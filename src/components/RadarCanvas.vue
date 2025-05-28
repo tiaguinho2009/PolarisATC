@@ -230,6 +230,7 @@ function onMouseDown(e) {
     dragging = true
     lastX = e.clientX
     lastY = e.clientY
+    radar.value.style.cursor = 'grabbing'
 }
 
 function onMouseMove(e) {
@@ -243,6 +244,7 @@ function onMouseMove(e) {
 
 function onMouseUp() {
     dragging = false
+    radar.value.style.cursor = 'grab'
 }
 
 function onWheel(e) {

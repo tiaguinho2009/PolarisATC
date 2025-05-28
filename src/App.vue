@@ -38,8 +38,11 @@ function updatePanelPosition(panel, newPos) {
     <img alt="Logo" class="logo" src="./assets/logo.svg" width="48" height="48" />
     <nav>
       <button class="nav-btn" @click="turnPositionPanel">Position</button>
+      <div class="nav-separator"></div>
       <button class="nav-btn">Flight Plan</button>
+      <div class="nav-separator"></div>
       <button class="nav-btn">Strips</button>
+      <div class="nav-separator"></div>
       <button class="nav-btn" @click="turnConfigPanel">Config</button>
     </nav>
   </header>
@@ -77,7 +80,7 @@ function updatePanelPosition(panel, newPos) {
 }
 nav {
   display: flex;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 .nav-btn {
   background: none;
@@ -92,6 +95,14 @@ nav {
 .nav-btn:hover {
   background: var(--color-primary);
   color: var(--color-text);
+}
+nav .nav-separator {
+  display: flex;
+  width: 1px;
+  height: 2em;
+  background: var(--color-surface);
+  vertical-align: middle;
+  align-self: center;
 }
 .main-content {
   flex: 1;

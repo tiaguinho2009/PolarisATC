@@ -3,7 +3,7 @@
   "name": "Santa Maria FIR",
   "description": "Santa Maria FIR (LPPO) is a Flight Information Region in the Azores, Portugal. It covers the airspace over the Azores archipelago and surrounding ocean areas.",
   "version": "1.0",
-  "author": "Tico",
+  "credits": "Made with ❤️ by PolarisATC developers.",
   "data": {
     "center-cords": {
         "lat": "N038.36.33.000",

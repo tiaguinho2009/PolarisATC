@@ -18,11 +18,10 @@
       </div>
       <div class="config-row">
         <label for="theme-select">Theme:</label>
-        <select id="theme-select" v-model="selectedTheme">
-          <option v-for="theme in themes" :key="theme.value" :value="theme.value">
-            {{ theme.label }}
-          </option>
-        </select>
+        <CustomDropdown
+            :options="themes"
+            v-model="selectedTheme"
+          />
       </div>
       <hr class="config-separator" />
       <div class="config-horizontal">

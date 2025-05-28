@@ -10,7 +10,7 @@
       <li
         v-for="option in options"
         :key="option.value"
-        :class="{ active: option.value === modelValue }"
+        :class="{ selected: option.value === modelValue }"
         @click.stop="select(option.value)"
       >
         {{ option.label }}
@@ -57,16 +57,21 @@ watch(open, (val) => {
   color: var(--color-text);
   font-size: 1rem;
   user-select: none;
-  min-height: 32px;
+  min-height: 30px;
   display: flex;
   align-items: center;
+  transition: all 0.2s ease;
+}
+
+.custom-dropdown:hover {
+  background: var(--color-secondary-hover);
 }
 
 .selected {
   display: flex;
   align-items: center;
   width: 100%;
-  height: 32px;
+  height: 30px;
   padding: 0 0.5rem;
   box-sizing: border-box;
   justify-content: space-between;
@@ -81,16 +86,20 @@ watch(open, (val) => {
 .dropdown-arrow {
   display: flex;
   align-items: center;
-  transition: transform 0.2s;
   margin-left: 0.5rem;
 }
 .dropdown-arrow img {
   width: 18px;
   height: 18px;
-  display: block;
+  display: flex;
+  transition: all 0.2s ease;
 }
-.dropdown-arrow.open {
-  transform: rotate(-180deg);
+.dropdown-arrow.open img {
+  transform: scale(1.3) rotate(-180deg);
+}
+
+.custom-dropdown:hover .dropdown-arrow:not(.open) img {
+  transform: scale(1.3) rotate(-90deg);
 }
 
 .dropdown-list {
@@ -98,11 +107,14 @@ watch(open, (val) => {
   left: 0; right: 0; top: 100%;
   background: var(--color-surface);
   border: 1px solid var(--color-primary);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   border-radius: 0 0 4px 4px;
   z-index: 10;
   margin: 0;
   padding: 0;
   list-style: none;
+  transform: scaleY(1);
+  transition: all 0.2s ease;
 }
 .dropdown-list li {
   padding: 0.2rem 0.5rem;
@@ -111,6 +123,12 @@ watch(open, (val) => {
   align-items: center;
   min-height: 32px;
 }
+
+.dropdown-list li.selected {
+  background: var(--color-primary-hover);
+  color: var(--color-heading);
+}
+
 .dropdown-list li:hover,
 .dropdown-list li.active {
   background: var(--color-primary);
