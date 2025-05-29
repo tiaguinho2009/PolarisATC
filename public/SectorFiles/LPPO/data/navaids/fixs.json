@@ -1,0 +1,11 @@
+[
+    {
+        "name": "Oceanic",
+        "minzoom": 0,
+        "symbol": "circle",
+        "color": "#FF0000",
+        "data": [
+            {"name": "4530N", "lat": 45, "lon": -30}
+        ]
+    }
+]

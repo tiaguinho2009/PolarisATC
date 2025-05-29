@@ -1,5 +1,8 @@
 {
-    "background": "#000000",
-    "CTR-line": "#0000FF",
-    "CTR-fill": "#0FFFFF"
+    "background": "#000040",
+    "ACC-line": "#005AAA",
+    "ACC-fill": "#005AAA",
+    "RDR-line": "#504900",
+    "APP-line": "#009696",
+    "APP-fill": "#009696"
 }

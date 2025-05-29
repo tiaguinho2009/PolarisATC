@@ -66,7 +66,7 @@ const selectedTheme = ref(themes[0].value)
 
 <style scoped>
 .panel {
-  background: var(--color-surface);
+  background: var(--panel-background);
   padding: 10px;
   height: 200px;
   width: 300px;
@@ -83,7 +83,8 @@ const selectedTheme = ref(themes[0].value)
 }
 
 .config-panel-content {
-  background: var(--color-surface);
+  background: none;
+  opacity: 1;
   height: auto;
   width: auto;
   color: var(--color-text);

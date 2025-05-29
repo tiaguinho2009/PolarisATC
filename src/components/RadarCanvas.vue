@@ -156,13 +156,20 @@ function renderPolygons(groups, center, sectorData) {
                     if (area["fill-color"]) {
                         ctx.save();
                         ctx.fillStyle = resolveColor(area["fill-color"]);
-                        ctx.globalAlpha = area["fill-opacity"];
+                        ctx.globalAlpha = area["fill-opacity"] ?? 1;
                         ctx.fill();
                         ctx.globalAlpha = 1;
                         ctx.restore();
                     }
-                    // Stroke
+                    // Stroke (duplo para evitar merge de cores)
                     ctx.save();
+                    ctx.globalAlpha = 1;
+                    ctx.globalCompositeOperation = 'source-over';
+                    // 1. Linha grossa com cor de fundo para "apagar" o que está embaixo
+                    ctx.strokeStyle = colorScheme.background ? resolveColor(colorScheme.background) : '#000';
+                    ctx.lineWidth = ((area.width || 1) / scale) + (0.5 / scale);
+                    ctx.stroke();
+                    // 2. Linha real por cima
                     ctx.strokeStyle = resolveColor(area["line-color"]);
                     ctx.lineWidth = (area.width || 1) / scale;
                     ctx.stroke();
@@ -261,7 +268,16 @@ function onWheel(e) {
 
     // Zoom in/out
     const zoom = e.deltaY < 0 ? 1.1 : 0.9
-    const newScale = scale * zoom
+    let newScale = scale * zoom
+
+    newScale = Math.max(0.5, Math.min(16000, newScale))
+
+    // Ajusta precisão conforme faixa
+    if (newScale < 10) {
+        newScale = Math.round(newScale * 100) / 100 // 2 casas decimais
+    } else {
+        newScale = Math.round(newScale) // inteiro
+    }
 
     // Atualiza o offset para manter o ponto sob o mouse fixo
     offsetX = mouseX - wx * newScale
@@ -286,6 +302,10 @@ onMounted(async () => {
         sectorFile = await loadSectorFile('/SectorFiles/LPPO/', 'main.json')
         if (sectorFile) {
             colorScheme = sectorFile.data['colorscheme']
+
+            if (colorScheme['background']) {
+                canvas.style.background = resolveColor(colorScheme['background'])
+            }
 
             // Centraliza o canvas no center-cords
             const center = sectorFile.data["center-cords"]
