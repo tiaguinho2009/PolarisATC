@@ -79,6 +79,7 @@ const selectedTheme = ref(themes[0].value)
   height: 0;
   opacity: 0;
   padding: 0 10px 0 10px;
+  transform: scaleY(0);
 }
 
 .config-panel-content {
