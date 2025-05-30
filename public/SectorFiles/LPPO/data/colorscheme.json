@@ -4,5 +4,13 @@
     "ACC-fill": "#005AAA",
     "RDR-line": "#504900",
     "APP-line": "#009696",
-    "APP-fill": "#009696"
+    "APP-fill": "#009696",
+    "Fixs-symbol": "#967D00",
+    "Fixs-labels-font": "",
+    "Fixs-labels-size": 12,
+    "Airways-line-color": "#00FF00",
+    "Airways-line-width": 1,
+    "Airways-line-dasharray": [5, 5],
+    "Airways-label-color": "#00FF00",
+    "Airways-label-size": 12
 }

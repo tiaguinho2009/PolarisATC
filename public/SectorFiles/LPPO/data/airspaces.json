@@ -8750,5 +8750,29 @@
                 ]
             }
         ]
+    },
+    {
+        "name": "MRVA",
+        "zindex": 2,
+        "minzoom": 5,
+        "data": [
+            {
+                "name": "LPPD MRVA",
+                "line-color": "@APP-line",
+                "fill-color": "@APP-fill",
+                "fill-opacity": 0,
+                "width": 1,
+                "lines": [
+                    {"name": "AB", "points": [
+                        {"name": "LPPD_A"},
+                        {"lat": "N038.04.42.901", "lon": "W026.09.54.974"},
+                        {"lat": "N038.05.03.314", "lon": "W026.09.31.254"},
+                        {"lat": "N038.05.23.435", "lon": "W026.09.07.136"},
+                        {"lat": "N038.05.43.259", "lon": "W026.08.42.626"},
+                        {"name": "LPPD_B"}
+                    ]}
+                ]
+            }
+        ]
     }
 ]

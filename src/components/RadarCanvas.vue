@@ -124,6 +124,22 @@ function resolveColor(val) {
     return val
 }
 
+function findFixCoordsByNameInIsDataGroups(fixName, sectorData) {
+    if (!sectorData?.navaids?.Fixs) return null;
+    for (const group of sectorData.navaids.Fixs) {
+        if (!group['is-data']) continue;
+        if (!Array.isArray(group.data)) continue;
+        const fix = group.data.find(f => f.name === fixName);
+        if (fix) {
+            return {
+                lat: typeof fix.lat === 'string' ? hmsToDecimal(fix.lat) : fix.lat,
+                lon: typeof fix.lon === 'string' ? hmsToDecimal(fix.lon) : fix.lon
+            };
+        }
+    }
+    return null;
+}
+
 function renderPolygons(groups, center, sectorData) {
     if (!Array.isArray(groups)) return;
 
@@ -132,51 +148,277 @@ function renderPolygons(groups, center, sectorData) {
 
     groups.forEach(group => {
         if (scale < group.minzoom) return;
-        if (Array.isArray(group.data)) {
-            group.data.forEach(area => {
-                if (area.cords && Array.isArray(area.cords)) {
-                    ctx.beginPath();
-                    area.cords.forEach((cord, idx) => {
-                        const { x, y } = auroraProjection(
-                            hmsToDecimal(cord.lat),
-                            hmsToDecimal(cord.lon),
-                            hmsToDecimal(center.lat),
-                            hmsToDecimal(center.lon),
-                            sectorData["mag-var"],
-                            sectorData["ratio"].lat,
-                            sectorData["ratio"].lon
-                        );
-                        if (idx === 0) {
-                            ctx.moveTo(x, y);
-                        } else {
-                            ctx.lineTo(x, y);
-                        }
-                    });
-                    // Fill
-                    if (area["fill-color"]) {
-                        ctx.save();
-                        ctx.fillStyle = resolveColor(area["fill-color"]);
-                        ctx.globalAlpha = area["fill-opacity"] ?? 1;
-                        ctx.fill();
-                        ctx.globalAlpha = 1;
-                        ctx.restore();
+        if (!Array.isArray(group.data)) return;
+
+        group.data.forEach(area => {
+            // --- SUPORTE AO FORMATO MRVA (lines) ---
+            if (Array.isArray(area.lines)) {
+                area.lines.forEach(line => {
+                    if (!Array.isArray(line.points)) return;
+                    drawPath(line.points, area, center, sectorData);
+                });
+                return; // Não processa como polygon normal
+            }
+            // --- FIM SUPORTE AO FORMATO MRVA ---
+
+            // Polígono normal (cords)
+            if (Array.isArray(area.cords)) {
+                drawPath(area.cords, area, center, sectorData);
+            }
+        });
+    });
+
+    // Função auxiliar para desenhar paths (cords ou lines)
+    function drawPath(points, area, center, sectorData) {
+        ctx.beginPath();
+        points.forEach((pt, idx) => {
+            let lat, lon;
+            // Suporte a referência por nome (MRVA e cords)
+            if (typeof pt.name === 'string') {
+                if (pt.name.startsWith('#')) {
+                    // Busca o fix pelo nome (sem o #) em todos os grupos is-data
+                    const fixName = pt.name.slice(1);
+                    const fixCoords = findFixCoordsByNameInIsDataGroups(fixName, sectorData);
+                    if (fixCoords) {
+                        lat = fixCoords.lat;
+                        lon = fixCoords.lon;
+                    } else {
+                        return;
                     }
-                    // Stroke (duplo para evitar merge de cores)
-                    ctx.save();
-                    ctx.globalAlpha = 1;
-                    ctx.globalCompositeOperation = 'source-over';
-                    // 1. Linha grossa com cor de fundo para "apagar" o que está embaixo
-                    ctx.strokeStyle = colorScheme.background ? resolveColor(colorScheme.background) : '#000';
-                    ctx.lineWidth = ((area.width || 1) / scale) + (0.5 / scale);
-                    ctx.stroke();
-                    // 2. Linha real por cima
-                    ctx.strokeStyle = resolveColor(area["line-color"]);
-                    ctx.lineWidth = (area.width || 1) / scale;
-                    ctx.stroke();
-                    ctx.restore();
+                } else {
+                    // Busca o fix pelo nome em todos os grupos is-data
+                    const fixCoords = findFixCoordsByNameInIsDataGroups(pt.name, sectorData);
+                    if (fixCoords) {
+                        lat = fixCoords.lat;
+                        lon = fixCoords.lon;
+                    } else {
+                        return;
+                    }
+                }
+            } else if (pt.lat && pt.lon) {
+                lat = hmsToDecimal(pt.lat);
+                lon = hmsToDecimal(pt.lon);
+            } else {
+                return;
+            }
+            const { x, y } = auroraProjection(
+                lat,
+                lon,
+                hmsToDecimal(center.lat),
+                hmsToDecimal(center.lon),
+                sectorData["mag-var"],
+                sectorData["ratio"].lat,
+                sectorData["ratio"].lon
+            );
+            if (idx === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+
+        // Fill
+        if (area["fill-color"]) {
+            ctx.save();
+            ctx.fillStyle = resolveColor(area["fill-color"]);
+            ctx.globalAlpha = area["fill-opacity"] ?? 1;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            ctx.restore();
+        }
+        // Stroke (duplo para evitar merge de cores)
+        ctx.save();
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.strokeStyle = colorScheme.background ? resolveColor(colorScheme.background) : '#000';
+        ctx.lineWidth = ((area.width || 1) / scale) + (0.5 / scale);
+        ctx.stroke();
+        ctx.strokeStyle = resolveColor(area["line-color"]);
+        ctx.lineWidth = (area.width || 1) / scale;
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
+function renderFixsLikeGroups(groups, center, sectorData) {
+    if (!Array.isArray(groups)) return;
+
+    groups.forEach(group => {
+        if (group.visible === false) return;
+        if (scale < (group.minzoom ?? 0)) return;
+        if (!Array.isArray(group.data)) return;
+
+        group.data.forEach(item => {
+            if (item.visible === false) return;
+            const name = item.name || item.id || '';
+            const lat = typeof item.lat === 'string' ? hmsToDecimal(item.lat) : item.lat;
+            const lon = typeof item.lon === 'string' ? hmsToDecimal(item.lon) : item.lon;
+            const { x, y } = auroraProjection(
+                lat,
+                lon,
+                hmsToDecimal(center.lat),
+                hmsToDecimal(center.lon),
+                sectorData["mag-var"],
+                sectorData["ratio"].lat,
+                sectorData["ratio"].lon
+            );
+
+            // Transforma para coordenadas de tela
+            const screenX = x * scale + offsetX;
+            const screenY = y * scale + offsetY;
+
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform para desenhar em pixels
+            ctx.globalAlpha = 1;
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = resolveColor(group.color?.Fixs_symbol) || '#FFF';
+            ctx.strokeStyle = resolveColor(group.color?.Fixs_symbol) || '#FFF';
+
+            // Símbolos diferentes para cada tipo
+            if (group.symbol === 'circle') {
+                ctx.beginPath();
+                ctx.arc(screenX, screenY, 4, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.stroke();
+            } else if (group.symbol === 'square') {
+                ctx.beginPath();
+                ctx.rect(screenX - 4, screenY - 4, 8, 8);
+                ctx.fill();
+                ctx.stroke();
+            } else if (group.symbol === 'pentagon') {
+                ctx.beginPath();
+                for (let i = 0; i < 5; i++) {
+                    const angle = ((Math.PI * 2) / 5) * i - Math.PI / 2;
+                    const px = screenX + 5 * Math.cos(angle);
+                    const py = screenY + 5 * Math.sin(angle);
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            } else if (group.symbol === 'triangle') {
+                ctx.beginPath();
+                ctx.moveTo(screenX, screenY - 5);
+                ctx.lineTo(screenX - 4.33, screenY + 2.5);
+                ctx.lineTo(screenX + 4.33, screenY + 2.5);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            } else if (group.symbol === 'cross') {
+                ctx.beginPath();
+                ctx.moveTo(screenX - 4, screenY);
+                ctx.lineTo(screenX + 4, screenY);
+                ctx.moveTo(screenX, screenY - 4);
+                ctx.lineTo(screenX, screenY + 4);
+                ctx.stroke();
+            }
+            // Outros símbolos podem ser adicionados aqui
+
+            // Label principal
+            if (group["visible-labels"] && name) {
+                ctx.font = '11px Segoe UI Semibold';
+                ctx.textBaseline = 'middle';
+                ctx.lineWidth = 1;
+                ctx.fillStyle = resolveColor(group.color?.Fixs_labels_font) || '#FFF';
+                ctx.fillText(name, screenX + 8, screenY);
+            }
+            // Label de frequência (se existir e ativado)
+            if (group["visible-labels-frequency"] && item.frequency) {
+                ctx.font = '10px Segoe UI';
+                ctx.textBaseline = 'top';
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = '#000';
+                ctx.strokeText(item.frequency, screenX + 8, screenY + 8);
+                ctx.fillStyle = resolveColor(group.color?.Fixs_labels_font) || '#FFF';
+                ctx.fillText(item.frequency, screenX + 8, screenY + 8);
+            }
+            ctx.restore();
+        });
+    });
+}
+
+function renderAirways(groups, center, sectorData) {
+    if (!Array.isArray(groups)) return;
+
+    groups.forEach(group => {
+        if (group.visible === false) return;
+        if (scale < (group.minzoom ?? 0)) return;
+        if (!Array.isArray(group.data)) return;
+
+        group.data.forEach(airway => {
+            if (!Array.isArray(airway.cords) || airway.cords.length < 2) return;
+
+            ctx.save();
+            ctx.globalAlpha = 1;
+            ctx.globalCompositeOperation = 'source-over';
+
+            // Aplica transform para obedecer ao scale e offset
+            ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
+
+            // Linha
+            ctx.beginPath();
+            airway.cords.forEach((pt, idx) => {
+                const lat = typeof pt.lat === 'string' ? hmsToDecimal(pt.lat) : pt.lat;
+                const lon = typeof pt.lon === 'string' ? hmsToDecimal(pt.lon) : pt.lon;
+                const { x, y } = auroraProjection(
+                    lat,
+                    lon,
+                    hmsToDecimal(center.lat),
+                    hmsToDecimal(center.lon),
+                    sectorData["mag-var"],
+                    sectorData["ratio"].lat,
+                    sectorData["ratio"].lon
+                );
+                if (idx === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
                 }
             });
-        }
+
+            // Estilo da linha
+            ctx.strokeStyle = resolveColor(group.color?.Line_color) || '#0ff';
+            ctx.lineWidth = (Number(resolveColor(group.color?.Line_width)) || 2) / scale;
+            const dash = resolveColor(group.color?.Line_dasharray);
+            if (dash && typeof dash === 'string') {
+                ctx.setLineDash(dash.split(',').map(Number));
+            } else {
+                ctx.setLineDash([]);
+            }
+            ctx.stroke();
+
+            // Label (nome da airway)
+            if (group["visible-labels"] && airway.name && airway.cords.length > 0) {
+                const midIdx = Math.floor(airway.cords.length / 2);
+                const midPt = airway.cords[midIdx];
+                const lat = typeof midPt.lat === 'string' ? hmsToDecimal(midPt.lat) : midPt.lat;
+                const lon = typeof midPt.lon === 'string' ? hmsToDecimal(midPt.lon) : midPt.lon;
+                const { x, y } = auroraProjection(
+                    lat,
+                    lon,
+                    hmsToDecimal(center.lat),
+                    hmsToDecimal(center.lon),
+                    sectorData["mag-var"],
+                    sectorData["ratio"].lat,
+                    sectorData["ratio"].lon
+                );
+                ctx.save();
+                // Tamanho da fonte fixo em px na tela, igual aos fixs
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.font = '11px Segoe UI Semibold';
+                ctx.textBaseline = 'middle';
+                ctx.lineWidth = 1;
+                ctx.fillStyle = resolveColor(group.color?.Label_color) || '#fff';
+                // Calcula coordenada de tela
+                const screenX = x * scale + offsetX;
+                const screenY = y * scale + offsetY;
+                ctx.fillText(airway.name, screenX + 5, screenY);
+                ctx.restore();
+            }
+
+            ctx.restore();
+        });
     });
 }
 
@@ -204,6 +446,20 @@ function draw() {
                 renderPolygons(airport.ground, center, sectorFile.data);
             }
         });
+    }
+
+    if (sectorFile && sectorFile.data && sectorFile.data.navaids) {
+    const center = sectorFile.data["center-cords"];
+    if (sectorFile.data.navaids.Fixs)
+        renderFixsLikeGroups(sectorFile.data.navaids.Fixs, center, sectorFile.data);
+    if (sectorFile.data.navaids.VOR)
+        renderFixsLikeGroups(sectorFile.data.navaids.VOR, center, sectorFile.data);
+    if (sectorFile.data.navaids.NDB)
+        renderFixsLikeGroups(sectorFile.data.navaids.NDB, center, sectorFile.data);
+    }
+    if (sectorFile && sectorFile.data && sectorFile.data.navaids && sectorFile.data.navaids.Airways) {
+        const center = sectorFile.data["center-cords"];
+        renderAirways(sectorFile.data.navaids.Airways, center, sectorFile.data);
     }
 
     ctx.restore();

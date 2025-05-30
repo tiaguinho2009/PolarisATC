@@ -1,0 +1,15 @@
+[
+    {
+        "name": "NDBs",
+        "visible": true,
+        "visible-labels": true,
+        "visible-labels-frequency": true,
+        "is-data": true,
+        "minzoom": 0,
+        "symbol": "pentagon",
+        "color": {"Fixs_symbol": "@Fixs-symbol", "Fixs_labels_font": "@Fixs-labels-font", "Fixs_labels_size": "@Fixs-labels-size"},
+        "data": [
+            {"name": "PD", "frequency": "351", "lat": "N037.44.06.100", "lon": "W025.40.30.200"}
+        ]
+    }
+]

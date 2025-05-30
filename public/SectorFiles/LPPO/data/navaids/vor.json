@@ -1,0 +1,15 @@
+[
+    {
+        "name": "VORs",
+        "visible": true,
+        "visible-labels": true,
+        "visible-labels-frequency": true,
+        "is-data": true,
+        "minzoom": 0,
+        "symbol": "square",
+        "color": {"Fixs_symbol": "@Fixs-symbol", "Fixs_labels_font": "@Fixs-labels-font", "Fixs_labels_size": "@Fixs-labels-size"},
+        "data": [
+            {"name": "VMG", "frequency": "111.200", "lat": "N037.50.45.600", "lon": "W025.45.29.300"}
+        ]
+    }
+]

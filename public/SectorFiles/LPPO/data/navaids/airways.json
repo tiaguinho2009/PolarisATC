@@ -1,0 +1,25 @@
+[
+    {
+        "name": "Tango Routes",
+        "visible": true,
+        "visible-labels": true,
+        "minzoom": 0,
+        "color": {
+            "Line_color": "@Airways-line-color",
+            "Line_width": "@Airways-line-width",
+            "Line_dasharray": "@Airways-line-dasharray",
+            "Label_color": "@Airways-label-color",
+            "Label_font": "@Airways-label-font",
+            "Label_size": "@Airways-label-size"
+        },
+        "data": [
+            {
+                "name": "T9",
+                "cords": [
+                    {"lat": 48.59708323, "lon": -8.99928631},
+                    {"lat": 44.99908732, "lon": -8.99968729}
+                ]
+            }
+        ]
+    }
+]
