@@ -8,13 +8,23 @@ let needsRedraw = false, drawing = false
 let dragging = false, lastX = 0, lastY = 0
 let offsetX = 0, offsetY = 0, scale = 1
 
+async function nodeProxy(commandOrData) {
+    try {
+        // Garante que o comando é string
+        const data = typeof commandOrData === 'string' ? commandOrData : String(commandOrData);
+        const resposta = await invoke('send_to_node', { data });
+        return resposta;
+    } catch (e) {
+        console.error('Erro na comunicação com Node.js:', e);
+        return null;
+    }
+}
+
 async function loadSectorFile(basePath, file) {
     // Monta o caminho relativo para o backend
     let relPath = `${basePath}${file}`.replace(/\\/g, '/').replace(/^\/+/, '');
     try {
-        console.log('Loading sector file:', relPath);
         const res = await invoke('read_sector_file', { path: relPath });
-        console.log('a',res)
         if (!res) return null;
         try {
             const data = JSON.parse(res);
@@ -433,6 +443,9 @@ onMounted(async () => {
 
     try {
         sectorFile = await loadSectorFile('LPPO/', 'main.json')
+        await nodeProxy('@connect');
+        const resposta = await invoke('send_to_node', { data: '#TR' })
+        console.log('Resposta do Node.js:', resposta)
         if (sectorFile) {
             colorScheme = sectorFile.data['colorscheme']
             if (colorScheme['background']) {

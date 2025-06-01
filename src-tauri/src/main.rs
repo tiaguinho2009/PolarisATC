@@ -5,6 +5,15 @@ use tauri::command;
 use std::fs;
 use std::env;
 
+use std::process::{Command, Stdio, Child};
+use std::io::{BufRead, BufReader, Write};
+use std::sync::{Arc, Mutex};
+use tauri::State;
+
+struct NodeServer {
+    child: Arc<Mutex<Child>>,
+}
+
 #[command]
 fn list_sector_files(subdir: Option<String>) -> Result<Vec<String>, String> {
     let mut path = env::current_exe()
@@ -28,7 +37,6 @@ fn list_sector_files(subdir: Option<String>) -> Result<Vec<String>, String> {
 
 #[command]
 fn read_sector_file(path: String) -> Result<String, String> {
-    println!("Tentando ler: {:?}", path);
     let base = std::env::current_exe()
         .map_err(|_| "Failed to get current exe path".to_string())?
         .parent()
@@ -36,14 +44,42 @@ fn read_sector_file(path: String) -> Result<String, String> {
         .join("resources")
         .join("SectorFiles");
     let full_path = base.join(&path);
-    println!("Caminho completo: {:?}", full_path);
     let content = std::fs::read_to_string(&full_path).map_err(|e| e.to_string())?;
     Ok(content)
 }
 
+#[command]
+fn send_to_node(data: String, state: State<NodeServer>) -> Result<String, String> {
+    let mut child = state.child.lock().unwrap();
+
+    // Envia para o Node.js
+    if let Some(stdin) = &mut child.stdin {
+        stdin.write_all(format!("{}\n", data).as_bytes()).map_err(|e| e.to_string())?;
+        stdin.flush().map_err(|e| e.to_string())?;
+    }
+
+    // Lê a resposta do Node.js (uma linha)
+    if let Some(stdout) = &mut child.stdout {
+        let mut reader = BufReader::new(stdout);
+        let mut response = String::new();
+        reader.read_line(&mut response).map_err(|e| e.to_string())?;
+        Ok(response.trim().to_string())
+    } else {
+        Err("No stdout from Node.js".to_string())
+    }
+}
+
 fn main() {
+    let child = Command::new("node")
+        .arg("server.js")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("Failed to start Node.js server");
+
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![list_sector_files, read_sector_file])
+        .manage(NodeServer { child: Arc::new(Mutex::new(child)) })
+        .invoke_handler(tauri::generate_handler![send_to_node, list_sector_files, read_sector_file])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
