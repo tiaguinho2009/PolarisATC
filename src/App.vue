@@ -31,6 +31,10 @@ function updatePanelPosition(panel, newPos) {
     configPanelPos.value = { ...newPos }
   }
 }
+
+document.addEventListener('contextmenu', function(event) {
+    event.preventDefault();
+});
 </script>
 
 <template>

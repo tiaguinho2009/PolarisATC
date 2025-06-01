@@ -1,0 +1,53 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Polaris ATC",
+  "version": "0.1.0",
+  "identifier": "com.github.tiaguinho2009.polarisatc",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Polaris ATC",
+        "width": 1080,
+        "height": 720,
+        "resizable": true,
+        "maximized": true,
+        "fullscreen": false,
+        "decorations": true,
+        "visible": true,
+        "alwaysOnTop": false,
+        "skipTaskbar": false
+      }
+    ],
+    "withGlobalTauri": true,
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "publisher": "https://github.com/tiaguinho2009",
+    "copyright": "Copyright © 2025 https://github.com/tiaguinho2009/PolarisATC",
+    "license": "See https://github.com/tiaguinho2009/PolarisATC",
+    "category": "SimulationGame",
+    "shortDescription": "Polaris ATC is a realistic air traffic control simulator for IVAO.",
+    "longDescription": "Polaris ATC is a realistic air traffic control simulator for IVAO, designed to provide an immersive experience for both controllers and pilots. It features advanced radar simulation, voice communication, and a user-friendly interface.",
+    "homepage": "https://github.com/tiaguinho2009/PolarisATC",
+    "resources": [
+      "resources/SectorFiles"
+    ]
+  }
+}

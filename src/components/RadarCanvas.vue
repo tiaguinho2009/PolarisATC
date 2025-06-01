@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, ref, onBeforeUnmount } from 'vue'
+import { invoke } from '@tauri-apps/api/core'
 
 const radar = ref(null)
 let ctx, sectorFile, colorScheme = {}
@@ -8,51 +9,48 @@ let dragging = false, lastX = 0, lastY = 0
 let offsetX = 0, offsetY = 0, scale = 1
 
 async function loadSectorFile(basePath, file) {
-    const url = `${basePath}${file}`.replace(/\\/g, '/')
+    // Monta o caminho relativo para o backend
+    let relPath = `${basePath}${file}`.replace(/\\/g, '/').replace(/^\/+/, '');
     try {
-        const res = await fetch(url)
-        if (!res.ok) {
-        // Só faz log se não for 404 (ficheiro não encontrado)
-        if (res.status !== 404) {
-            console.warn(`Não foi possível carregar ${url}: HTTP ${res.status}`)
-        }
-        return null
-        }
+        console.log('Loading sector file:', relPath);
+        const res = await invoke('read_sector_file', { path: relPath });
+        console.log('a',res)
+        if (!res) return null;
         try {
-        const data = await res.json()
-        // Função recursiva para resolver referências
-        async function resolveRefs(obj, currentPath) {
-            if (Array.isArray(obj)) {
-            return Promise.all(obj.map(item => resolveRefs(item, currentPath)))
-            } else if (obj && typeof obj === 'object') {
-            const entries = await Promise.all(
-                Object.entries(obj).map(async ([key, value]) => {
-                if (typeof value === 'string' && value.endsWith('.json')) {
-                    const nextPath = value.startsWith('data/') ? value : `${currentPath}${value}`
-                    try {
-                    const loaded = await loadSectorFile(basePath, nextPath)
-                    return [key, loaded]
-                    } catch {
-                    return [key, null]
-                    }
+            const data = JSON.parse(res);
+            // Função recursiva para resolver referências
+            async function resolveRefs(obj, currentPath) {
+                if (Array.isArray(obj)) {
+                    return Promise.all(obj.map(item => resolveRefs(item, currentPath)));
+                } else if (obj && typeof obj === 'object') {
+                    const entries = await Promise.all(
+                        Object.entries(obj).map(async ([key, value]) => {
+                            if (typeof value === 'string' && value.endsWith('.json')) {
+                                const nextPath = value.startsWith('data/') ? value : `${currentPath}${value}`;
+                                try {
+                                    const loaded = await loadSectorFile(basePath, nextPath);
+                                    return [key, loaded];
+                                } catch {
+                                    return [key, null];
+                                }
+                            } else {
+                                return [key, await resolveRefs(value, currentPath)];
+                            }
+                        })
+                    );
+                    return Object.fromEntries(entries);
                 } else {
-                    return [key, await resolveRefs(value, currentPath)]
+                    return obj;
                 }
-                })
-            )
-            return Object.fromEntries(entries)
-            } else {
-            return obj
             }
-        }
-        return resolveRefs(data, basePath)
+            return resolveRefs(data, basePath);
         } catch {
-        // Erro ao fazer parsing do JSON (provavelmente HTML 404)
-        return null
+            // Erro ao fazer parsing do JSON (provavelmente HTML 404)
+            return null;
         }
     } catch (e) {
-        // Erro de rede ou fetch
-        return null
+        // Erro de rede ou invoke
+        return null;
     }
 }
 
@@ -389,7 +387,6 @@ function onMouseDown(e) {
     dragging = true
     lastX = e.clientX
     lastY = e.clientY
-    radar.value.style.cursor = 'grabbing'
 }
 function onMouseMove(e) {
     if (!dragging) return
@@ -401,7 +398,6 @@ function onMouseMove(e) {
 }
 function onMouseUp() {
     dragging = false
-    radar.value.style.cursor = 'grab'
 }
 function onWheel(e) {
     e.preventDefault()
@@ -436,7 +432,7 @@ onMounted(async () => {
     canvas.addEventListener('wheel', onWheel, { passive: false })
 
     try {
-        sectorFile = await loadSectorFile('/SectorFiles/LPPO/', 'main.json')
+        sectorFile = await loadSectorFile('LPPO/', 'main.json')
         if (sectorFile) {
             colorScheme = sectorFile.data['colorscheme']
             if (colorScheme['background']) {
@@ -483,7 +479,7 @@ onBeforeUnmount(() => {
     width: 100%;
     height: 100%;
     background: var(--color-background);
-    cursor: grab;
+    cursor: url('/src/assets/PolarisATC-Mouse.svg') 16 16, crosshair;
     user-select: none;
 }
 </style>
