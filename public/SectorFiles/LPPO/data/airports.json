@@ -25,5 +25,32 @@
         ],
         "ground": "data/ground/lppd.json",
         "labels": "data/labels/lppd.json"
+    },
+    {
+        "icao": "LPFL",
+        "name": "João Paulo II Airport",
+        "arp": {"lat": "N037.44.31.000", "lon": "W025.41.52.000"},
+        "runways": [
+            {
+                "rwy": "12",
+                "hdg": "118",
+                "lenght": 2323,
+                "width": 45,
+                "surface": "Asphalt",
+                "cords": {"lat": "N037.44.45.800", "lon":"W025.42.38.240"},
+                "height": 79
+            },
+            {
+                "rwy": "30",
+                "hdg": "298",
+                "lenght": 2323,
+                "width": 45,
+                "surface": "Asphalt",
+                "cords": {"lat": "N037.44.18.900", "lon":"W025.41.12.860"},
+                "height": 57
+            }
+        ],
+        "ground": "data/ground/lpfl.json",
+        "labels": "data/labels/lpfl.json"
     }
 ]
