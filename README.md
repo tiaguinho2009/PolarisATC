@@ -1,29 +1,48 @@
 # PolarisATC
 
-This template should help get you started developing with Vue 3 in Vite.
 
-## Recommended IDE Setup
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## Links & Resources
 
-## Customize configuration
+### Legal
+- [License](LICENSE)
+- [Terms of Service](.github/TERMS.md)
+- [Code of Conduct](.github/CODE_OF_CONDUCT.md)
+- [Security](.github/SECURITY.md)
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+### Communuty
+- Discord _`To be created`_
+- Documentation _`To be created`_
 
-## Project Setup
+### Support
+- [Github Issues](https://github.com/tiaguinho2009/PolarisATC/issues)
+- In the last case you can always join Discord and ask for help.
+
+# Project Setup
+
+The main frameworks of the project are [Vue](https://vuejs.org) and [Tauri 1.0](https://tauri.app)
+
+## Install Source Code and Dependencies
 
 ```sh
+# Clone the repository
+git clone https://github.com/tiaguinho2009/PolarisATC.git
+
+# Change to the correspondig directory
+cd PolarisATC
+
+# Install dependencies
 npm install
 ```
 
 ### Compile and Hot-Reload for Development
 
 ```sh
-npm run dev
+npm run tauri dev
 ```
 
 ### Compile and Minify for Production
 
 ```sh
-npm run build
+npm run tauri build
 ```
