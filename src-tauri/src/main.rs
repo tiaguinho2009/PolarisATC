@@ -1,14 +1,13 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tauri::command;
-use std::fs;
 use std::env;
-
-use std::process::{Command, Stdio, Child};
+use std::fs;
 use std::io::{BufRead, BufReader, Write};
+use std::process::{Child, Command, Stdio};
 use std::sync::{Arc, Mutex};
-use tauri::State;
+use tauri::{command, State};
+use tauri_plugin_updater::UpdaterExt;
 
 struct NodeServer {
     child: Arc<Mutex<Child>>,
@@ -54,7 +53,9 @@ fn send_to_node(data: String, state: State<NodeServer>) -> Result<String, String
 
     // Envia para o Node.js
     if let Some(stdin) = &mut child.stdin {
-        stdin.write_all(format!("{}\n", data).as_bytes()).map_err(|e| e.to_string())?;
+        stdin
+            .write_all(format!("{}\n", data).as_bytes())
+            .map_err(|e| e.to_string())?;
         stdin.flush().map_err(|e| e.to_string())?;
     }
 
@@ -70,6 +71,7 @@ fn send_to_node(data: String, state: State<NodeServer>) -> Result<String, String
 }
 
 fn main() {
+    // Inicia o Node.js server
     let child = Command::new("node")
         .arg("server.js")
         .stdin(Stdio::piped())
@@ -78,8 +80,39 @@ fn main() {
         .expect("Failed to start Node.js server");
 
     tauri::Builder::default()
-        .manage(NodeServer { child: Arc::new(Mutex::new(child)) })
-        .invoke_handler(tauri::generate_handler![send_to_node, list_sector_files, read_sector_file])
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .setup(|app| {
+            // Checa e instala update automaticamente
+            let handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                if let Ok(Some(update)) = handle.updater().unwrap().check().await {
+                    let mut downloaded = 0;
+                    update
+                        .download_and_install(
+                            |chunk_length, content_length| {
+                                downloaded += chunk_length;
+                                println!("downloaded {downloaded} from {content_length:?}");
+                            },
+                            || {
+                                println!("download finished");
+                            },
+                        )
+                        .await
+                        .unwrap();
+                    println!("update installed");
+                    handle.restart();
+                }
+            });
+            Ok(())
+        })
+        .manage(NodeServer {
+            child: Arc::new(Mutex::new(child)),
+        })
+        .invoke_handler(tauri::generate_handler![
+            send_to_node,
+            list_sector_files,
+            read_sector_file
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

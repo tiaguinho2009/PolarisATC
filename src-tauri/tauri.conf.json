@@ -18,7 +18,7 @@
         "resizable": true,
         "maximized": true,
         "fullscreen": false,
-        "decorations": true,
+        "decorations": false,
         "visible": true,
         "alwaysOnTop": false,
         "skipTaskbar": false
@@ -48,6 +48,24 @@
     "homepage": "https://github.com/tiaguinho2009/PolarisATC",
     "resources": [
       "resources/SectorFiles"
-    ]
+    ],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "dialog": {
+        "title": "Update Available",
+        "description": "A new version of Polaris ATC is available. Would you like to update now?",
+        "buttonText": "Update"
+      },
+      "endpoints": [
+        "https://github.com/tiaguinho2009/PolarisATC/releases/latest/download/updater.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      },
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEUwNEU0NzhERDc1MUY0Q0UKUldUTzlGSFhqVWRPNEhNYWxMajVYTUxZcW9VdE03Wno1ZmhtdER5YXlUOUhaMXNxMm1yOFBvUDYK"
+    }
   }
 }

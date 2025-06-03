@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Uploaded to: SVG Repo, www.svgrepo.com, Transformed by: SVG Repo Mixer Tools -->
+
+<svg
+   width="256px"
+   height="256px"
+   viewBox="0 0 24 24"
+   fill="none"
+   version="1.1"
+   id="svg1"
+   sodipodi:docname="square2.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs1" />
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:zoom="2.2677135"
+     inkscape:cx="102.96715"
+     inkscape:cy="107.37688"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
+  <rect
+     x="4"
+     y="4"
+     width="16"
+     height="16"
+     rx="2"
+     stroke="#ffffff"
+     stroke-width="2"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     id="rect1"
+     transform="translate(-1.5,1.5)"
+     style="display:inline" />
+  <path
+     id="rect2"
+     style="stroke:#ffffff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"
+     d="m 18,20.000061 c 1.107999,0 2.000061,-0.892062 2.000061,-2.000061 V 6 C 20.000061,4.8920011 19.107999,3.999939 18,3.999939 H 6 C 4.8920011,3.999939 3.999939,4.8920011 3.999939,6"
+     transform="translate(1.5,-1.5)"
+     sodipodi:nodetypes="cssssc" />
+</svg>
