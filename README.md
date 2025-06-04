@@ -1,6 +1,8 @@
 # PolarisATC
 
+## How to Install
 
+Go to the [latest releases](https://github.com/tiaguinho2009/PolarisATC/releases/latest) and download the respective setup file for your operating system.
 
 ## Links & Resources
 
@@ -11,14 +13,15 @@
 - [Security](.github/SECURITY.md)
 
 ### Communuty
-- Discord _`To be created`_
-- Documentation _`To be created`_
+- [Discord](https://discord.gg/eSTuJNnARf)
+- [Github Discussions](https://github.com/tiaguinho2009/PolarisATC/discussions)
 
 ### Support
+- [Documentation](https://github.com/tiaguinho2009/PolarisATC/wiki) ___`To be created`___
 - [Github Issues](https://github.com/tiaguinho2009/PolarisATC/issues)
 - In the last case you can always join Discord and ask for help.
 
-# Project Setup
+# Project Development Setup
 
 The main frameworks of the project are [Vue](https://vuejs.org) and [Tauri 1.0](https://tauri.app)
 
