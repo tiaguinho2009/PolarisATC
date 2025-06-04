@@ -47,7 +47,8 @@
     "longDescription": "Polaris ATC is a realistic air traffic control simulator for IVAO, designed to provide an immersive experience for both controllers and pilots. It features advanced radar simulation, voice communication, and a user-friendly interface.",
     "homepage": "https://github.com/tiaguinho2009/PolarisATC",
     "resources": [
-      "resources/SectorFiles"
+      "resources/SectorFiles",
+      "resources/Plugins"
     ],
     "createUpdaterArtifacts": true
   },

@@ -1,6 +1,8 @@
 <script setup>
 import { onMounted, ref, onBeforeUnmount } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
+import { globalConfig, log, getSectorFileData } from '../API.js'
+import { radarEvents, uiEvents } from '../events'
 
 const radar = ref(null)
 let ctx, sectorFile, colorScheme = {}
@@ -8,61 +10,6 @@ let needsRedraw = false, drawing = false
 let dragging = false, lastX = 0, lastY = 0
 let offsetX = 0, offsetY = 0, scale = 1
 
-async function nodeProxy(commandOrData) {
-    try {
-        // Garante que o comando é string
-        const data = typeof commandOrData === 'string' ? commandOrData : String(commandOrData);
-        const resposta = await invoke('send_to_node', { data });
-        return resposta;
-    } catch (e) {
-        console.error('Erro na comunicação com Node.js:', e);
-        return null;
-    }
-}
-
-async function loadSectorFile(basePath, file) {
-    // Monta o caminho relativo para o backend
-    let relPath = `${basePath}${file}`.replace(/\\/g, '/').replace(/^\/+/, '');
-    try {
-        const res = await invoke('read_sector_file', { path: relPath });
-        if (!res) return null;
-        try {
-            const data = JSON.parse(res);
-            // Função recursiva para resolver referências
-            async function resolveRefs(obj, currentPath) {
-                if (Array.isArray(obj)) {
-                    return Promise.all(obj.map(item => resolveRefs(item, currentPath)));
-                } else if (obj && typeof obj === 'object') {
-                    const entries = await Promise.all(
-                        Object.entries(obj).map(async ([key, value]) => {
-                            if (typeof value === 'string' && value.endsWith('.json')) {
-                                const nextPath = value.startsWith('data/') ? value : `${currentPath}${value}`;
-                                try {
-                                    const loaded = await loadSectorFile(basePath, nextPath);
-                                    return [key, loaded];
-                                } catch {
-                                    return [key, null];
-                                }
-                            } else {
-                                return [key, await resolveRefs(value, currentPath)];
-                            }
-                        })
-                    );
-                    return Object.fromEntries(entries);
-                } else {
-                    return obj;
-                }
-            }
-            return resolveRefs(data, basePath);
-        } catch {
-            // Erro ao fazer parsing do JSON (provavelmente HTML 404)
-            return null;
-        }
-    } catch (e) {
-        // Erro de rede ou invoke
-        return null;
-    }
-}
 
 // =================== UTILITÁRIOS ===================
 function hmsToDecimal(coord) {
@@ -335,7 +282,7 @@ function renderAirways(groups, center, sectorData) {
 
 // =================== DRAW E EVENTOS ===================
 function draw() {
-    console.log('Rendering...')
+    radarEvents.emit('beforeDraw', { ctx, sectorFile, colorScheme, scale, offsetX, offsetY })
     ctx.save();
     ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
     ctx.clearRect(
@@ -348,7 +295,9 @@ function draw() {
     // Airspaces
     if (sectorFile?.data?.airspaces) {
         const center = sectorFile.data["center-cords"];
+        radarEvents.emit('beforeRenderAirspaces', { ctx, center, sectorFile })
         renderPolygons(sectorFile.data.airspaces, center, sectorFile.data);
+        radarEvents.emit('afterRenderAirspaces', { ctx, center, sectorFile })
     }
     // Airports ground
     if (sectorFile?.data?.airports) {
@@ -366,6 +315,7 @@ function draw() {
         if (sectorFile.data.navaids.Airways) renderAirways(sectorFile.data.navaids.Airways, center, sectorFile.data);
     }
     ctx.restore();
+    radarEvents.emit('afterDraw', { ctx, sectorFile, colorScheme, scale, offsetX, offsetY })
     if (needsRedraw) {
         needsRedraw = false;
         scheduleDraw();
@@ -397,6 +347,7 @@ function onMouseDown(e) {
     dragging = true
     lastX = e.clientX
     lastY = e.clientY
+    radarEvents.emit('mouseDown', { x: lastX, y: lastY })
 }
 function onMouseMove(e) {
     if (!dragging) return
@@ -404,10 +355,12 @@ function onMouseMove(e) {
     offsetY += e.clientY - lastY
     lastX = e.clientX
     lastY = e.clientY
+    radarEvents.emit('mouseMove', { offsetX, offsetY })
     scheduleDraw()
 }
 function onMouseUp() {
     dragging = false
+    radarEvents.emit('mouseUp')
 }
 function onWheel(e) {
     e.preventDefault()
@@ -428,6 +381,7 @@ function onWheel(e) {
         scale = newScale
         scheduleDraw()
     }
+    radarEvents.emit('zoom', { scale, offsetX, offsetY })
 }
 
 // =================== CICLO DE VIDA ===================
@@ -442,10 +396,8 @@ onMounted(async () => {
     canvas.addEventListener('wheel', onWheel, { passive: false })
 
     try {
-        sectorFile = await loadSectorFile('LPPO/', 'main.json')
-        await nodeProxy('@connect');
-        const resposta = await invoke('send_to_node', { data: '#TR' })
-        console.log('Resposta do Node.js:', resposta)
+        sectorFile = await getSectorFileData(globalConfig.sector.basePath, globalConfig.sector.mainFile)
+        log('Setor carregado', sectorFile)
         if (sectorFile) {
             colorScheme = sectorFile.data['colorscheme']
             if (colorScheme['background']) {
@@ -465,11 +417,70 @@ onMounted(async () => {
             }
         }
         resizeCanvas()
-        console.log(sectorFile)
     } catch (e) {
-        console.error('Erro ao carregar sector LPPC:', e)
+        log('Erro ao carregar setor', e)
+    }
+    const sector = {
+            basePath: '/LPPO/',
+            mainFile: 'main.json'
+        }
+    globalConfig.setSector(sector)
+})
+
+uiEvents.on('themeChanged', (theme) => {
+    if (radar.value) {
+        radar.value.style.background = colorScheme.background || 'var(--color-background)'
+        scheduleDraw()
     }
 })
+
+// =================== API: Exemplo de escuta de eventos externos ===================
+radarEvents.on('redraw', () => scheduleDraw())
+radarEvents.on('setZoom', ({ newScale }) => {
+    scale = newScale
+    scheduleDraw()
+})
+radarEvents.on('setOffset', ({ x, y }) => {
+    offsetX = x
+    offsetY = y
+    scheduleDraw()
+})
+
+// =================== LOAD SECTOR FILE (mantém igual) ===================
+async function nodeProxy(commandOrData) {
+    try {
+        const data = typeof commandOrData === 'string' ? commandOrData : String(commandOrData);
+        const resposta = await invoke('send_to_node', { data });
+        return resposta;
+    } catch (e) {
+        log('Erro na comunicação com Node.js', e)
+        return null;
+    }
+}
+
+async function loadSectorFile(sector) {
+    sectorFile = await getSectorFileData(globalConfig.sector.basePath, globalConfig.sector.mainFile)
+        log('Setor carregado', sectorFile)
+        if (sectorFile) {
+            colorScheme = sectorFile.data['colorscheme']
+            if (colorScheme['background']) {
+                canvas.style.background = resolveColor(colorScheme['background'])
+            }
+            // Centraliza o canvas no center-cords
+            const center = sectorFile.data["center-cords"]
+            if (center) {
+                const { x, y } = auroraProjection(
+                    hmsToDecimal(center.lat),
+                    hmsToDecimal(center.lon),
+                    hmsToDecimal(center.lat),
+                    hmsToDecimal(center.lon)
+                )
+                offsetX = canvas.width / 2 - x * scale
+                offsetY = canvas.height / 2 - y * scale
+            }
+        }
+        resizeCanvas()
+}
 
 onBeforeUnmount(() => {
     window.removeEventListener('resize', resizeCanvas)
