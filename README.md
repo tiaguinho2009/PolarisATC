@@ -1,4 +1,5 @@
 # PolarisATC
+![PolarisATCBanner](https://github.com/user-attachments/assets/c20a10bf-f2b5-4f8b-b469-5221c63ece73)
 
 ## Introduction
 
