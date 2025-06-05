@@ -11,7 +11,7 @@ let dragging = false, lastX = 0, lastY = 0
 let offsetX = 0, offsetY = 0, scale = 1
 
 
-// =================== UTILITÁRIOS ===================
+// =================== UTILITIES ===================
 function hmsToDecimal(coord) {
     if (typeof coord === 'number') return coord;
     const match = coord.match(/^([NSWE])(\d{2,3})\.(\d{2})\.(\d{2})(?:\.(\d{3}))?$/);
@@ -63,9 +63,9 @@ function findFixCoordsByNameInIsDataGroups(fixName, sectorData) {
     return null;
 }
 
-// =================== RENDERIZAÇÃO ===================
+// =================== RENDERING ===================
 
-// Polígonos e MRVA
+// Polygons and MRVA
 function renderPolygons(groups, center, sectorData) {
     if (!Array.isArray(groups)) return;
     groups = [...groups].sort((a, b) => (a.zindex ?? 0) - (b.zindex ?? 0));
@@ -121,7 +121,7 @@ function renderPolygons(groups, center, sectorData) {
             ctx.globalAlpha = 1;
             ctx.restore();
         }
-        // Stroke (duplo para evitar merge de cores)
+        // Stroke (double to avoid color merging)
         const width = area.width || 1;
         if (area.width !== 0) {
             ctx.save();
@@ -138,7 +138,7 @@ function renderPolygons(groups, center, sectorData) {
     }
 }
 
-// Fixs, VORs, NDBs
+// Fixes, VORs, NDBs
 function renderFixsLikeGroups(groups, center, sectorData) {
     if (!Array.isArray(groups)) return;
     groups.forEach(group => {
@@ -165,7 +165,7 @@ function renderFixsLikeGroups(groups, center, sectorData) {
             ctx.fillStyle = resolveColor(group.color?.Fixs_symbol) || '#FFF';
             ctx.strokeStyle = resolveColor(group.color?.Fixs_symbol) || '#FFF';
 
-            // Símbolos
+            // Symbols
             if (group.symbol === 'circle') {
                 ctx.beginPath(); ctx.arc(screenX, screenY, 4, 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
             } else if (group.symbol === 'square') {
@@ -191,7 +191,7 @@ function renderFixsLikeGroups(groups, center, sectorData) {
                 ctx.moveTo(screenX, screenY - 4); ctx.lineTo(screenX, screenY + 4);
                 ctx.stroke();
             }
-            // Label principal
+            // Main label
             if (group["visible-labels"] && name) {
                 ctx.font = '11px Segoe UI Semibold';
                 ctx.textBaseline = 'middle';
@@ -199,7 +199,7 @@ function renderFixsLikeGroups(groups, center, sectorData) {
                 ctx.fillStyle = resolveColor(group.color?.Fixs_labels_font) || '#FFF';
                 ctx.fillText(name, screenX + 8, screenY);
             }
-            // Label de frequência
+            // Frequency label
             if (group["visible-labels-frequency"] && item.frequency) {
                 ctx.font = '10px Segoe UI';
                 ctx.textBaseline = 'top';
@@ -228,7 +228,7 @@ function renderAirways(groups, center, sectorData) {
             ctx.globalCompositeOperation = 'source-over';
             ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
 
-            // Linha
+            // Line
             ctx.beginPath();
             airway.cords.forEach((pt, idx) => {
                 const lat = typeof pt.lat === 'string' ? hmsToDecimal(pt.lat) : pt.lat;
@@ -252,7 +252,7 @@ function renderAirways(groups, center, sectorData) {
                 ctx.stroke();
             }
 
-            // Label airway (tamanho fixo na tela)
+            // Airway label (fixed size on screen)
             if (group["visible-labels"] && airway.name && airway.cords.length > 0) {
                 const midIdx = Math.floor(airway.cords.length / 2);
                 const midPt = airway.cords[midIdx];
@@ -280,7 +280,7 @@ function renderAirways(groups, center, sectorData) {
     });
 }
 
-// =================== DRAW E EVENTOS ===================
+// =================== DRAW AND EVENTS ===================
 function draw() {
     radarEvents.emit('beforeDraw', { ctx, sectorFile, colorScheme, scale, offsetX, offsetY })
     ctx.save();
@@ -342,7 +342,7 @@ function resizeCanvas() {
     scheduleDraw()
 }
 
-// =================== INTERAÇÃO ===================
+// =================== INTERACTION ===================
 function onMouseDown(e) {
     dragging = true
     lastX = e.clientX
@@ -384,7 +384,7 @@ function onWheel(e) {
     radarEvents.emit('zoom', { scale, offsetX, offsetY })
 }
 
-// =================== CICLO DE VIDA ===================
+// =================== LIFECYCLE ===================
 onMounted(async () => {
     const canvas = radar.value
     ctx = canvas.getContext('2d')
@@ -396,29 +396,10 @@ onMounted(async () => {
     canvas.addEventListener('wheel', onWheel, { passive: false })
 
     try {
-        sectorFile = await getSectorFileData(globalConfig.sector.basePath, globalConfig.sector.mainFile)
-        log('Setor carregado', sectorFile)
-        if (sectorFile) {
-            colorScheme = sectorFile.data['colorscheme']
-            if (colorScheme['background']) {
-                canvas.style.background = resolveColor(colorScheme['background'])
-            }
-            // Centraliza o canvas no center-cords
-            const center = sectorFile.data["center-cords"]
-            if (center) {
-                const { x, y } = auroraProjection(
-                    hmsToDecimal(center.lat),
-                    hmsToDecimal(center.lon),
-                    hmsToDecimal(center.lat),
-                    hmsToDecimal(center.lon)
-                )
-                offsetX = canvas.width / 2 - x * scale
-                offsetY = canvas.height / 2 - y * scale
-            }
-        }
+        loadSectorFile()
         resizeCanvas()
     } catch (e) {
-        log('Erro ao carregar setor', e)
+        log('Error loading sector', e)
     }
     const sector = {
             basePath: '/LPPO/',
@@ -434,7 +415,16 @@ uiEvents.on('themeChanged', (theme) => {
     }
 })
 
-// =================== API: Exemplo de escuta de eventos externos ===================
+radarEvents.on('sectorChanged', (sector) => {
+    if (sector && sector.basePath && sector.mainFile) {
+        loadSectorFile()
+        scheduleDraw()
+    } else {
+        log('Invalid or undefined sector')
+    }
+})
+
+// =================== API: Example of listening to external events ===================
 radarEvents.on('redraw', () => scheduleDraw())
 radarEvents.on('setZoom', ({ newScale }) => {
     scale = newScale
@@ -446,40 +436,40 @@ radarEvents.on('setOffset', ({ x, y }) => {
     scheduleDraw()
 })
 
-// =================== LOAD SECTOR FILE (mantém igual) ===================
+// =================== LOAD SECTOR FILE ===================
 async function nodeProxy(commandOrData) {
     try {
         const data = typeof commandOrData === 'string' ? commandOrData : String(commandOrData);
         const resposta = await invoke('send_to_node', { data });
         return resposta;
     } catch (e) {
-        log('Erro na comunicação com Node.js', e)
+        log('Error communicating with (Aurora)', e)
         return null;
     }
 }
 
-async function loadSectorFile(sector) {
+async function loadSectorFile() {
+    const canvas = radar.value
     sectorFile = await getSectorFileData(globalConfig.sector.basePath, globalConfig.sector.mainFile)
-        log('Setor carregado', sectorFile)
-        if (sectorFile) {
-            colorScheme = sectorFile.data['colorscheme']
-            if (colorScheme['background']) {
-                canvas.style.background = resolveColor(colorScheme['background'])
-            }
-            // Centraliza o canvas no center-cords
-            const center = sectorFile.data["center-cords"]
-            if (center) {
-                const { x, y } = auroraProjection(
-                    hmsToDecimal(center.lat),
-                    hmsToDecimal(center.lon),
-                    hmsToDecimal(center.lat),
-                    hmsToDecimal(center.lon)
-                )
-                offsetX = canvas.width / 2 - x * scale
-                offsetY = canvas.height / 2 - y * scale
-            }
+    if (sectorFile) {
+        colorScheme = sectorFile.data['colorscheme']
+        if (colorScheme['background']) {
+            canvas.style.background = resolveColor(colorScheme['background'])
         }
-        resizeCanvas()
+        // Center the canvas on center-cords
+        const center = sectorFile.data["center-cords"]
+        if (center) {
+            const { x, y } = auroraProjection(
+                hmsToDecimal(center.lat),
+                hmsToDecimal(center.lon),
+                hmsToDecimal(center.lat),
+                hmsToDecimal(center.lon)
+            )
+            offsetX = canvas.width / 2 - x * scale
+            offsetY = canvas.height / 2 - y * scale
+        }
+    }
+    resizeCanvas()
 }
 
 onBeforeUnmount(() => {

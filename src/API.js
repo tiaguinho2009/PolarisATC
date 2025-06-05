@@ -12,6 +12,7 @@ export const globalConfig = {
     },
     setSector(sector) {
         this.sector = sector
+        console.log('Sector changed to:', sector)
         radarEvents.emit('sectorChanged', sector)
     }
 }
@@ -50,7 +51,11 @@ export function removeUIHook(event, fn) {
 }
 
 // Basic utility functions
-export async function getSectorFileData(basePath, file) {
+export async function getSectorFileData(basePath = globalConfig.sector?.basePath, file = globalConfig.sector?.mainFile) {
+    if (!basePath || !file) {
+        console.warn('getSectorFileData called without basePath or file');
+        return null;
+    }
     let relPath = `${basePath}${file}`.replace(/\\/g, '/').replace(/^\/+/, '');
     try {
         const res = await invoke('read_sector_file', { path: relPath });
