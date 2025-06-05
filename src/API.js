@@ -28,26 +28,44 @@ export function registerPlugin(plugin) {
 export function getPlugins() {
     return plugins
 }
+export async function loadPlugins() {
+    // Lista de plugins pode ser obtida do backend ou ser fixa
+    console.log('Loading plugins...');
+    const pluginDirs = await invoke('list_plugins'); // Exemplo: retorna ['MyPlugin', 'AnotherPlugin']
+    console.log('Available plugins:', pluginDirs);
+    for (const dir of pluginDirs) {
+        try {
+            // O caminho precisa ser resolvido para o build do Vite/Tauri
+            const pluginModule = await import(`/resources/Plugins/${dir}/main.js`);
+            if (pluginModule && typeof pluginModule.default === 'function') {
+                registerPlugin(pluginModule.default);
+                log.normal(`Plugin loaded: ${dir}`);
+            }
+        } catch (e) {
+            log.warn(`Failed to load plugin: ${dir}`, e);
+        }
+    }
+}
 
 // ===================== Logging =====================
-export function log(msg, ...args) {
-    // You can replace this with a more advanced logger
-    console.log('[PolarisATC]', msg, ...args)
-    uiEvents.emit('log', [msg, ...args])
+export const log = {
+    warn: (msg, ...args) => {
+        console.warn('[PolarisATC] [WARN]', msg, ...args)
+        uiEvents.emit('warn', ['[WARN]', msg, ...args])
+    },
+    normal: (msg, ...args) => {
+        console.log('[PolarisATC]', msg, ...args)
+        uiEvents.emit('log', [msg, ...args])
+    }
 }
 
-// ===================== Hooks (for extensibility) =====================
-export function addRadarHook(event, fn) {
-    radarEvents.on(event, fn)
-}
-export function removeRadarHook(event, fn) {
-    radarEvents.off(event, fn)
-}
-export function addUIHook(event, fn) {
-    uiEvents.on(event, fn)
-}
-export function removeUIHook(event, fn) {
-    uiEvents.off(event, fn)
+// ===================== Messaging =====================
+export function message(title, body, options = {}) {
+    uiEvents.emit('message', {
+        title,
+        body,
+        options
+    })
 }
 
 // Basic utility functions
@@ -104,11 +122,9 @@ const API = {
     globalConfig,
     registerPlugin,
     getPlugins,
+    loadPlugins,
     log,
-    addRadarHook,
-    removeRadarHook,
-    addUIHook,
-    removeUIHook,
+    message,
     getSectorFileData
 }
 

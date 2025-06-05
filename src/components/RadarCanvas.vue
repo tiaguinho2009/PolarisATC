@@ -399,7 +399,7 @@ onMounted(async () => {
         loadSectorFile()
         resizeCanvas()
     } catch (e) {
-        log('Error loading sector', e)
+        log.warn('Error loading sector', e)
     }
     const sector = {
             basePath: '/LPPO/',
@@ -420,7 +420,7 @@ radarEvents.on('sectorChanged', (sector) => {
         loadSectorFile()
         scheduleDraw()
     } else {
-        log('Invalid or undefined sector')
+        log.warn('Invalid or undefined sector')
     }
 })
 
@@ -443,14 +443,14 @@ async function nodeProxy(commandOrData) {
         const resposta = await invoke('send_to_node', { data });
         return resposta;
     } catch (e) {
-        log('Error communicating with (Aurora)', e)
+        log.warn('Error communicating with (Aurora)', e)
         return null;
     }
 }
 
 async function loadSectorFile() {
     const canvas = radar.value
-    sectorFile = await getSectorFileData(globalConfig.sector.basePath, globalConfig.sector.mainFile)
+    sectorFile = await getSectorFileData()
     if (sectorFile) {
         colorScheme = sectorFile.data['colorscheme']
         if (colorScheme['background']) {
