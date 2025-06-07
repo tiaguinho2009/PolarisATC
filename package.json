@@ -1,6 +1,8 @@
 {
   "name": "polarisatc",
-  "version": "0.0.0",
+  "displayName": "PolarisATC",
+  "license": "AGPL-3.0-only",
+  "version": "0.0.1",
   "private": true,
   "type": "module",
   "scripts": {

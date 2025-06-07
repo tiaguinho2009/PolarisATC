@@ -4,9 +4,6 @@ import RadarCanvas from './components/RadarCanvas.vue'
 import PositionPanel from './components/Position.vue'
 import ConfigPanel from './components/Config.vue'
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { loadPlugins } from './API.js'
-
-loadPlugins()
 
 const showPositionPanel = ref(false)
 const showConfigPanel = ref(false)

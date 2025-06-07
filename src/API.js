@@ -12,38 +12,8 @@ export const globalConfig = {
     },
     setSector(sector) {
         this.sector = sector
-        console.log('Sector changed to:', sector)
+        log.log('Sector changed to:', sector)
         radarEvents.emit('sectorChanged', sector)
-    }
-}
-
-// ===================== Plugin System =====================
-const plugins = []
-export function registerPlugin(plugin) {
-    // Plugins receive API context on init
-    if (typeof plugin.init === 'function') plugin.init(API)
-    plugins.push(plugin)
-    uiEvents.emit('pluginRegistered', plugin)
-}
-export function getPlugins() {
-    return plugins
-}
-export async function loadPlugins() {
-    // Lista de plugins pode ser obtida do backend ou ser fixa
-    console.log('Loading plugins...');
-    const pluginDirs = await invoke('list_plugins'); // Exemplo: retorna ['MyPlugin', 'AnotherPlugin']
-    console.log('Available plugins:', pluginDirs);
-    for (const dir of pluginDirs) {
-        try {
-            // O caminho precisa ser resolvido para o build do Vite/Tauri
-            const pluginModule = await import(`/resources/Plugins/${dir}/main.js`);
-            if (pluginModule && typeof pluginModule.default === 'function') {
-                registerPlugin(pluginModule.default);
-                log.normal(`Plugin loaded: ${dir}`);
-            }
-        } catch (e) {
-            log.warn(`Failed to load plugin: ${dir}`, e);
-        }
     }
 }
 
@@ -53,7 +23,11 @@ export const log = {
         console.warn('[PolarisATC] [WARN]', msg, ...args)
         uiEvents.emit('warn', ['[WARN]', msg, ...args])
     },
-    normal: (msg, ...args) => {
+    error: (msg, ...args) => {
+        console.error('[PolarisATC] [ERROR]', msg, ...args)
+        uiEvents.emit('error', ['[ERROR]', msg, ...args])
+    },
+    log: (msg, ...args) => {
         console.log('[PolarisATC]', msg, ...args)
         uiEvents.emit('log', [msg, ...args])
     }
@@ -69,48 +43,50 @@ export function message(title, body, options = {}) {
 }
 
 // Basic utility functions
-export async function getSectorFileData(basePath = globalConfig.sector?.basePath, file = globalConfig.sector?.mainFile) {
-    if (!basePath || !file) {
-        console.warn('getSectorFileData called without basePath or file');
-        return null;
-    }
-    let relPath = `${basePath}${file}`.replace(/\\/g, '/').replace(/^\/+/, '');
-    try {
-        const res = await invoke('read_sector_file', { path: relPath });
-        if (!res) return null;
-        try {
-            const data = JSON.parse(res);
-            async function resolveRefs(obj, currentPath) {
-                if (Array.isArray(obj)) {
-                    return Promise.all(obj.map(item => resolveRefs(item, currentPath)));
-                } else if (obj && typeof obj === 'object') {
-                    const entries = await Promise.all(
-                        Object.entries(obj).map(async ([key, value]) => {
-                            if (typeof value === 'string' && value.endsWith('.json')) {
-                                const nextPath = value.startsWith('data/') ? value : `${currentPath}${value}`;
-                                try {
-                                    const loaded = await getSectorFileData(basePath, nextPath);
-                                    return [key, loaded];
-                                } catch {
-                                    return [key, null];
-                                }
-                            } else {
-                                return [key, await resolveRefs(value, currentPath)];
-                            }
-                        })
-                    );
-                    return Object.fromEntries(entries);
-                } else {
-                    return obj;
-                }
-            }
-            return resolveRefs(data, basePath);
-        } catch {
+export const sectorFileAPI = {
+    async getData(basePath = globalConfig.sector?.basePath, file = globalConfig.sector?.mainFile) {
+        if (!basePath || !file) {
+            log.warn('getSectorFileData called without basePath or file')
             return null;
         }
-    } catch (e) {
-        console.error('Failed to load sector file:', e);
-        return null;
+        let relPath = `${basePath}${file}`.replace(/\\/g, '/').replace(/^\/+/, '');
+        try {
+            const res = await invoke('read_sector_file', { path: relPath });
+            if (!res) return null;
+            try {
+                const data = JSON.parse(res);
+                async function resolveRefs(obj, currentPath) {
+                    if (Array.isArray(obj)) {
+                        return Promise.all(obj.map(item => resolveRefs(item, currentPath)));
+                    } else if (obj && typeof obj === 'object') {
+                        const entries = await Promise.all(
+                            Object.entries(obj).map(async ([key, value]) => {
+                                if (typeof value === 'string' && value.endsWith('.json')) {
+                                    const nextPath = value.startsWith('data/') ? value : `${currentPath}${value}`;
+                                    try {
+                                        const loaded = await sectorFileAPI.getData(basePath, nextPath);
+                                        return [key, loaded];
+                                    } catch {
+                                        return [key, null];
+                                    }
+                                } else {
+                                    return [key, await resolveRefs(value, currentPath)];
+                                }
+                            })
+                        );
+                        return Object.fromEntries(entries);
+                    } else {
+                        return obj;
+                    }
+                }
+                return resolveRefs(data, basePath);
+            } catch {
+                return null;
+            }
+        } catch (e) {
+            log.error('Failed to load sector file:', basePath, file, e)
+            return null;
+        }
     }
 }
 
@@ -120,12 +96,9 @@ const API = {
     radarEvents,
     uiEvents,
     globalConfig,
-    registerPlugin,
-    getPlugins,
-    loadPlugins,
     log,
     message,
-    getSectorFileData
+    sectorFileAPI
 }
 
 export default API

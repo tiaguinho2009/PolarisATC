@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref, onBeforeUnmount } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
-import { globalConfig, log, getSectorFileData } from '../API.js'
+import { globalConfig, log, sectorFileAPI } from '../API.js'
 import { radarEvents, uiEvents } from '../events'
 
 const radar = ref(null)
@@ -437,20 +437,10 @@ radarEvents.on('setOffset', ({ x, y }) => {
 })
 
 // =================== LOAD SECTOR FILE ===================
-async function nodeProxy(commandOrData) {
-    try {
-        const data = typeof commandOrData === 'string' ? commandOrData : String(commandOrData);
-        const resposta = await invoke('send_to_node', { data });
-        return resposta;
-    } catch (e) {
-        log.warn('Error communicating with (Aurora)', e)
-        return null;
-    }
-}
 
 async function loadSectorFile() {
     const canvas = radar.value
-    sectorFile = await getSectorFileData()
+    sectorFile = await sectorFileAPI.getData();
     if (sectorFile) {
         colorScheme = sectorFile.data['colorscheme']
         if (colorScheme['background']) {
