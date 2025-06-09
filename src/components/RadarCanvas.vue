@@ -1,11 +1,11 @@
 <script setup>
 import { onMounted, ref, onBeforeUnmount } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
-import { globalConfig, log, sectorFileAPI } from '../API.js'
+import { globalConfig, log, sectorFileAPI, sector } from '../API.js'
 import { radarEvents, uiEvents } from '../events'
 
 const radar = ref(null)
-let ctx, sectorFile, colorScheme = {}
+let ctx, colorScheme = {}
 let needsRedraw = false, drawing = false
 let dragging = false, lastX = 0, lastY = 0
 let offsetX = 0, offsetY = 0, scale = 1
@@ -282,7 +282,7 @@ function renderAirways(groups, center, sectorData) {
 
 // =================== DRAW AND EVENTS ===================
 function draw() {
-    radarEvents.emit('beforeDraw', { ctx, sectorFile, colorScheme, scale, offsetX, offsetY })
+    radarEvents.emit('beforeDraw', { ctx, sectorFile: sector, colorScheme, scale, offsetX, offsetY })
     ctx.save();
     ctx.setTransform(scale, 0, 0, scale, offsetX, offsetY);
     ctx.clearRect(
@@ -293,29 +293,29 @@ function draw() {
     );
 
     // Airspaces
-    if (sectorFile?.data?.airspaces) {
-        const center = sectorFile.data["center-cords"];
-        radarEvents.emit('beforeRenderAirspaces', { ctx, center, sectorFile })
-        renderPolygons(sectorFile.data.airspaces, center, sectorFile.data);
-        radarEvents.emit('afterRenderAirspaces', { ctx, center, sectorFile })
+    if (sector?.data?.airspaces) {
+        const center = sector.data["center-cords"];
+        radarEvents.emit('beforeRenderAirspaces', { ctx, center, sectorFile: sector })
+        renderPolygons(sector.data.airspaces, center, sector.data);
+        radarEvents.emit('afterRenderAirspaces', { ctx, center, sectorFile: sector })
     }
     // Airports ground
-    if (sectorFile?.data?.airports) {
-        const center = sectorFile.data["center-cords"];
-        sectorFile.data.airports.forEach(airport => {
-            if (airport.ground) renderPolygons(airport.ground, center, sectorFile.data);
+    if (sector?.data?.airports) {
+        const center = sector.data["center-cords"];
+        sector.data.airports.forEach(airport => {
+            if (airport.ground) renderPolygons(airport.ground, center, sector.data);
         });
     }
     // Navaids
-    if (sectorFile?.data?.navaids) {
-        const center = sectorFile.data["center-cords"];
-        if (sectorFile.data.navaids.Fixs) renderFixsLikeGroups(sectorFile.data.navaids.Fixs, center, sectorFile.data);
-        if (sectorFile.data.navaids.VOR) renderFixsLikeGroups(sectorFile.data.navaids.VOR, center, sectorFile.data);
-        if (sectorFile.data.navaids.NDB) renderFixsLikeGroups(sectorFile.data.navaids.NDB, center, sectorFile.data);
-        if (sectorFile.data.navaids.Airways) renderAirways(sectorFile.data.navaids.Airways, center, sectorFile.data);
+    if (sector?.data?.navaids) {
+        const center = sector.data["center-cords"];
+        if (sector.data.navaids.Fixs) renderFixsLikeGroups(sector.data.navaids.Fixs, center, sector.data);
+        if (sector.data.navaids.VOR) renderFixsLikeGroups(sector.data.navaids.VOR, center, sector.data);
+        if (sector.data.navaids.NDB) renderFixsLikeGroups(sector.data.navaids.NDB, center, sector.data);
+        if (sector.data.navaids.Airways) renderAirways(sector.data.navaids.Airways, center, sector.data);
     }
     ctx.restore();
-    radarEvents.emit('afterDraw', { ctx, sectorFile, colorScheme, scale, offsetX, offsetY })
+    radarEvents.emit('afterDraw', { ctx, sectorFile: sector, colorScheme, scale, offsetX, offsetY })
     if (needsRedraw) {
         needsRedraw = false;
         scheduleDraw();
@@ -440,26 +440,32 @@ radarEvents.on('setOffset', ({ x, y }) => {
 
 async function loadSectorFile() {
     const canvas = radar.value
-    sectorFile = await sectorFileAPI.getData();
-    if (sectorFile) {
-        colorScheme = sectorFile.data['colorscheme']
-        if (colorScheme['background']) {
-            canvas.style.background = resolveColor(colorScheme['background'])
+    await sectorFileAPI.loadSector().then(data => {
+        if (!data) {
+            log.error('Failed to load sector data')
+            return
         }
-        // Center the canvas on center-cords
-        const center = sectorFile.data["center-cords"]
-        if (center) {
-            const { x, y } = auroraProjection(
-                hmsToDecimal(center.lat),
-                hmsToDecimal(center.lon),
-                hmsToDecimal(center.lat),
-                hmsToDecimal(center.lon)
-            )
-            offsetX = canvas.width / 2 - x * scale
-            offsetY = canvas.height / 2 - y * scale
+        console.log(sector)
+        if (sector) {
+            colorScheme = sector.data['colorscheme']
+            if (colorScheme['background']) {
+                canvas.style.background = resolveColor(colorScheme['background'])
+            }
+            // Center the canvas on center-cords
+            const center = sector.data["center-cords"]
+            if (center) {
+                const { x, y } = auroraProjection(
+                    hmsToDecimal(center.lat),
+                    hmsToDecimal(center.lon),
+                    hmsToDecimal(center.lat),
+                    hmsToDecimal(center.lon)
+                )
+                offsetX = canvas.width / 2 - x * scale
+                offsetY = canvas.height / 2 - y * scale
+            }
         }
-    }
-    resizeCanvas()
+        resizeCanvas()
+    })
 }
 
 onBeforeUnmount(() => {

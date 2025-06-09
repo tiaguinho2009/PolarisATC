@@ -71,29 +71,6 @@ fn send_to_node(data: String, state: State<NodeServer>) -> Result<String, String
     }
 }
 
-#[command]
-fn list_plugins() -> Result<Vec<String>, String> {
-    let plugins_dir = std::env::current_exe()
-        .map_err(|_| "Failed to get current exe path".to_string())?
-        .parent()
-        .ok_or("No parent directory for exe".to_string())?
-        .join("resources")
-        .join("Plugins");
-
-    let entries = std::fs::read_dir(&plugins_dir).map_err(|e| e.to_string())?;
-    let mut plugins = vec![];
-    for entry in entries {
-        let entry = entry.map_err(|e| e.to_string())?;
-        let path: PathBuf = entry.path();
-        if path.is_dir() {
-            if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-                plugins.push(name.to_string());
-            }
-        }
-    }
-    Ok(plugins)
-}
-
 fn main() {
     // Inicia o Node.js server
     let child = Command::new("node")
@@ -135,8 +112,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             send_to_node,
             list_sector_files,
-            read_sector_file,
-            list_plugins
+            read_sector_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

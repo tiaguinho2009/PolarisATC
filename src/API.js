@@ -43,8 +43,10 @@ export function message(title, body, options = {}) {
 }
 
 // Basic utility functions
+export let sector = null;
+
 export const sectorFileAPI = {
-    async getData(basePath = globalConfig.sector?.basePath, file = globalConfig.sector?.mainFile) {
+    async load(basePath = globalConfig.sector?.basePath, file = globalConfig.sector?.mainFile) {
         if (!basePath || !file) {
             log.warn('getSectorFileData called without basePath or file')
             return null;
@@ -64,7 +66,7 @@ export const sectorFileAPI = {
                                 if (typeof value === 'string' && value.endsWith('.json')) {
                                     const nextPath = value.startsWith('data/') ? value : `${currentPath}${value}`;
                                     try {
-                                        const loaded = await sectorFileAPI.getData(basePath, nextPath);
+                                        const loaded = await sectorFileAPI.load(basePath, nextPath);
                                         return [key, loaded];
                                     } catch {
                                         return [key, null];
@@ -87,6 +89,12 @@ export const sectorFileAPI = {
             log.error('Failed to load sector file:', basePath, file, e)
             return null;
         }
+    },
+    
+    async loadSector(basePath, file) {
+        const loaded = await sectorFileAPI.load(basePath, file);
+        sector = loaded;
+        return loaded;
     }
 }
 
@@ -98,7 +106,8 @@ const API = {
     globalConfig,
     log,
     message,
-    sectorFileAPI
+    sectorFileAPI,
+    sector
 }
 
 export default API
