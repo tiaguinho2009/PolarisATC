@@ -48,8 +48,8 @@ function resolveColor(val) {
 }
 
 function findFixCoordsByNameInIsDataGroups(fixName, sectorData) {
-    if (!sectorData?.navaids?.Fixs) return null;
-    for (const group of sectorData.navaids.Fixs) {
+    if (!sectorData?.navaids?.data?.Fixs?.data) return null;
+    for (const group of sectorData.navaids.data.Fixs.data) {
         if (!group['is-data']) continue;
         if (!Array.isArray(group.data)) continue;
         const fix = group.data.find(f => f.name === fixName);
@@ -70,9 +70,11 @@ function renderPolygons(groups, center, sectorData) {
     if (!Array.isArray(groups)) return;
     groups = [...groups].sort((a, b) => (a.zindex ?? 0) - (b.zindex ?? 0));
     groups.forEach(group => {
+        if (!group.visible) return;
         if (scale < group.minzoom) return;
         if (!Array.isArray(group.data)) return;
         group.data.forEach(area => {
+            if (!area.visible) return;
             if (Array.isArray(area.lines)) {
                 area.lines.forEach(line => {
                     if (!Array.isArray(line.points)) return;
@@ -222,6 +224,7 @@ function renderAirways(groups, center, sectorData) {
         if (scale < (group.minzoom ?? 0)) return;
         if (!Array.isArray(group.data)) return;
         group.data.forEach(airway => {
+            if (airway.visible === false) return;
             if (!Array.isArray(airway.cords) || airway.cords.length < 2) return;
             ctx.save();
             ctx.globalAlpha = 1;
@@ -293,10 +296,10 @@ function draw() {
     );
 
     // Airspaces
-    if (sector?.data?.airspaces) {
+    if (sector?.data?.airspaces && sector.data.airspaces.visible) {
         const center = sector.data["center-cords"];
         radarEvents.emit('beforeRenderAirspaces', { ctx, center, sectorFile: sector })
-        renderPolygons(sector.data.airspaces, center, sector.data);
+        renderPolygons(sector.data.airspaces.data, center, sector.data);
         radarEvents.emit('afterRenderAirspaces', { ctx, center, sectorFile: sector })
     }
     // Airports ground
@@ -307,12 +310,17 @@ function draw() {
         });
     }
     // Navaids
-    if (sector?.data?.navaids) {
+    if (sector?.data?.navaids && sector.data.navaids.visible !== false) {
         const center = sector.data["center-cords"];
-        if (sector.data.navaids.Fixs) renderFixsLikeGroups(sector.data.navaids.Fixs, center, sector.data);
-        if (sector.data.navaids.VOR) renderFixsLikeGroups(sector.data.navaids.VOR, center, sector.data);
-        if (sector.data.navaids.NDB) renderFixsLikeGroups(sector.data.navaids.NDB, center, sector.data);
-        if (sector.data.navaids.Airways) renderAirways(sector.data.navaids.Airways, center, sector.data);
+        const navaidsData = sector.data.navaids.data;
+        if (navaidsData?.Fixs && navaidsData.Fixs.visible !== false)
+            renderFixsLikeGroups(navaidsData.Fixs.data, center, sector.data);
+        if (navaidsData?.VOR && navaidsData.VOR.visible !== false)
+            renderFixsLikeGroups(navaidsData.VOR.data, center, sector.data);
+        if (navaidsData?.NDB && navaidsData.NDB.visible !== false)
+            renderFixsLikeGroups(navaidsData.NDB.data, center, sector.data);
+        if (navaidsData?.Airways && navaidsData.Airways.visible !== false)
+            renderAirways(navaidsData.Airways.data, center, sector.data);
     }
     ctx.restore();
     radarEvents.emit('afterDraw', { ctx, sectorFile: sector, colorScheme, scale, offsetX, offsetY })
@@ -334,6 +342,10 @@ function scheduleDraw() {
         needsRedraw = true
     }
 }
+
+radarEvents.on('draw', () => {
+    scheduleDraw()
+})
 
 function resizeCanvas() {
     const canvas = radar.value
@@ -396,7 +408,6 @@ onMounted(async () => {
     canvas.addEventListener('wheel', onWheel, { passive: false })
 
     try {
-        loadSectorFile()
         resizeCanvas()
     } catch (e) {
         log.warn('Error loading sector', e)

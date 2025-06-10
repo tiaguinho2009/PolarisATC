@@ -6,7 +6,6 @@ use std::fs;
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, Command, Stdio};
 use std::sync::{Arc, Mutex};
-use std::path::PathBuf;
 use tauri::{command, State};
 use tauri_plugin_updater::UpdaterExt;
 

@@ -1,11 +1,13 @@
 [
     {
         "name": "ACC",
+        "visible": true,
         "zindex": 0,
         "minzoom": 0,
         "data": [
             {
                 "name": "LPPO RDR2",
+                "visible": true,
                 "line-color": "@RDR-line",
                 "fill-color": "@ACC-fill",
                 "fill-opacity": 0,
@@ -2979,6 +2981,7 @@
             },
             {
                 "name": "LPPO FIR",
+                "visible": true,
                 "line-color": "@ACC-line",
                 "fill-color": "@ACC-fill",
                 "fill-opacity": 0,
@@ -3127,6 +3130,7 @@
             },
             {
                 "name": "LPPO RDR",
+                "visible": true,
                 "line-color": "@ACC-line",
                 "fill-color": "@ACC-fill",
                 "fill-opacity": 0,
@@ -5458,11 +5462,13 @@
     },
     {
         "name": "APP",
+        "visible": true,
         "zindex": 1,
         "minzoom": 0,
         "data": [
             {
                 "name": "LPPD APP",
+                "visible": true,
                 "line-color": "@APP-line",
                 "fill-color": "@APP-fill",
                 "fill-opacity": 0,
@@ -6388,6 +6394,7 @@
             },
             {
                 "name": "LPHR APP",
+                "visible": true,
                 "line-color": "@APP-line",
                 "fill-color": "@APP-fill",
                 "fill-opacity": 0,
@@ -6789,6 +6796,7 @@
             },
             {
                 "name": "LPLA APP",
+                "visible": true,
                 "line-color": "@APP-line",
                 "fill-color": "@APP-fill",
                 "fill-opacity": 0,
@@ -7774,6 +7782,7 @@
             },
             {
                 "name": "LPFL APP",
+                "visible": true,
                 "line-color": "@APP-line",
                 "fill-color": "@APP-fill",
                 "fill-opacity": 0,
@@ -8753,11 +8762,13 @@
     },
     {
         "name": "MRVA",
+        "visible": true,
         "zindex": 2,
         "minzoom": 5,
         "data": [
             {
                 "name": "LPPD MRVA",
+                "visible": true,
                 "line-color": "@APP-line",
                 "fill-color": "@APP-fill",
                 "fill-opacity": 0,

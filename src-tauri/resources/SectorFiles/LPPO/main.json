@@ -16,12 +16,20 @@
     },
     "colorscheme": "data/colorscheme.json",
     "airports": "data/airports.json",
-    "airspaces": "data/airspaces.json",
+    "airspaces": {
+      "name": "Airspaces",
+      "data": "data/airspaces.json",
+      "visible": true
+    },
     "navaids": {
-        "VOR" : "data/navaids/vor.json",
-        "NDB" : "data/navaids/ndb.json",
-        "Airways" : "data/navaids/airways.json",
-        "Fixs": "data/navaids/fixs.json"
+      "name": "Navaids",
+      "visible": true,
+      "data": {
+        "VOR": { "name":"VOR", "data": "data/navaids/vor.json", "visible": true },
+        "NDB": { "name":"NDB", "data": "data/navaids/ndb.json", "visible": true },
+        "Airways": { "name":"Airways", "data": "data/navaids/airways.json", "visible": true },
+        "Fixs": { "name":"Fixs", "data": "data/navaids/fixs.json", "visible": true }
+      }
     },
     "atcs": "data/atcs.json"
   }

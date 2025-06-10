@@ -132,6 +132,7 @@
         "name": "MRVA",
         "visible": false,
         "visible-labels": false,
+        "showOptions": false,
         "is-data": true,
         "minzoom": 0,
         "symbol": "circle",

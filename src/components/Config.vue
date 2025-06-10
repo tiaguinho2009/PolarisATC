@@ -24,19 +24,25 @@
           />
       </div>
       <hr class="config-separator" />
-      <div class="config-horizontal">
-        <!-- Conteúdo horizontal futuro -->
+      <div class="config-row">
+        <div class="radar-list">
+          <template v-if="sector" v-for="(group, idx) in radarOptions" :key="idx">
+            <RadarGroup :group="group" />
+          </template>
+        </div>
       </div>
-      <!-- Próxima secção será adicionada depois -->
     </div>
     </div>
   </Panel>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watchEffect } from 'vue'
 import Panel from './Panel.vue'
 import CustomDropdown from './CustomDropdown.vue'
+import RadarGroup from './RadarGroup.vue'
+import { sector } from '@/API'
+import { radarEvents, uiEvents } from '../events'
 
 const props = defineProps({
   position: { type: Object, required: true }
@@ -62,6 +68,29 @@ const themes = [
 
 const selectedSector = ref(sectorFiles[0].value)
 const selectedTheme = ref(themes[0].value)
+
+// Radar options: estrutura hierárquica
+const radarOptions = ref([])
+
+watchEffect(() => {
+  if (sector && sector.data) {
+    radarOptions.value = [
+      sector.data.airspaces,
+      {
+        name: sector.data.navaids.name,
+        visible: true,
+        data: [
+          sector.data.navaids.data.VOR,
+          sector.data.navaids.data.NDB,
+          sector.data.navaids.data.Airways,
+          sector.data.navaids.data.Fixs,
+        ]
+      }
+    ]
+  } else {
+    radarOptions.value = []
+  }
+})
 </script>
 
 <style scoped>
@@ -126,14 +155,43 @@ const selectedTheme = ref(themes[0].value)
 .config-separator {
   border: none;
   border-top: 1px solid var(--color-primary);
-  margin: 0.5rem 0;
 }
 
-.config-horizontal {
+.radar-list {
   display: flex;
-  flex-direction: row;
-  gap: 1rem;
-  align-items: center;
-  min-height: 2rem;
+  flex-direction: column;
+  width: 100%;
+  border: 1px solid var(--color-primary);
+  border-radius: 4px;
+  background-color: var(--color-secondary);
+  max-height: 200px;
+  overflow-y: auto;
+  /* Minimal scrollbar: só aparece no hover */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: box-shadow 0.2s;
+}
+.radar-list:hover {
+  scrollbar-color: var(--color-primary) transparent;
+}
+.radar-list::-webkit-scrollbar {
+  width: 6px;
+  background: transparent;
+}
+.radar-list::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 4px;
+  opacity: 0.5;
+}
+.radar-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.radar-list:not(:hover)::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+/* Corrige bug do overflow durante expansão dos grupos internos */
+.radar-group-slide-enter-active, .radar-group-slide-leave-active {
+  transition: max-height 0.5s ease, opacity 0.5s ease;
+  overflow: hidden !important;
 }
 </style>
