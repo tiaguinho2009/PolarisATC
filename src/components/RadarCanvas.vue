@@ -413,10 +413,9 @@ onMounted(async () => {
         log.warn('Error loading sector', e)
     }
     const sector = {
-            basePath: '/LPPO/',
-            mainFile: 'main.json'
+            basePath: '/LPPO/'
         }
-    globalConfig.setSector(sector)
+    //globalConfig.setSector(sector)
 })
 
 uiEvents.on('themeChanged', (theme) => {
@@ -427,7 +426,7 @@ uiEvents.on('themeChanged', (theme) => {
 })
 
 radarEvents.on('sectorChanged', (sector) => {
-    if (sector && sector.basePath && sector.mainFile) {
+    if (sector && sector.basePath) {
         loadSectorFile()
         scheduleDraw()
     } else {

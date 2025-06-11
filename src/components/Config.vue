@@ -47,11 +47,11 @@
 </template>
 
 <script setup>
-import { ref, watchEffect } from 'vue'
+import { onMounted, ref, watch, watchEffect } from 'vue'
 import Panel from './Panel.vue'
 import CustomDropdown from './CustomDropdown.vue'
 import RadarGroup from './RadarGroup.vue'
-import { sector } from '@/API'
+import { sector, sectorFileAPI, globalConfig } from '@/API'
 import { radarEvents, uiEvents } from '../events'
 
 const props = defineProps({
@@ -67,17 +67,39 @@ function updatePosition(pos) {
   emit('update:position', pos)
 }
 
-const sectorFiles = [
-  { value: 'LPPO', label: 'LPPO' },
-  { value: 'LPPC', label: 'LPPC' }
-]
+const sectorFiles = ref([])
+const selectedSector = ref()
 const themes = [
-  { value: 'dark', label: 'Dark' },
-  { value: 'light', label: 'Light' }
+  { value: 'dark', label: 'Dark' }
 ]
-
-const selectedSector = ref(sectorFiles[0].value)
 const selectedTheme = ref(themes[0].value)
+
+async function loadSectorFiles() {
+  const files = await sectorFileAPI.getSectors()
+  console.log('[PolarisATC] Available sector files:', files)
+  if (Array.isArray(files)) {
+    sectorFiles.value = files.map(f => ({ label: f, value: `/${f}/` }))
+    // Seleciona o primeiro sector automaticamente se não houver nenhum selecionado
+    if (!selectedSector.value && sectorFiles.value.length > 0) {
+      selectedSector.value = sectorFiles.value[0].value
+    }
+  } else {
+    sectorFiles.value = []
+  }
+  return files;
+}
+
+onMounted(() => {
+  loadSectorFiles()
+})
+
+watch(selectedSector, (val) => {
+  if (val) {
+    // Remove as barras para obter o nome
+    const name = val.replace(/^\/(.*)\/$/, '$1')
+    globalConfig.setSector({ basePath: val, mainFile: 'main.json', name })
+  }
+})
 
 // Radar options: estrutura hierárquica
 const radarOptions = ref([])
@@ -148,11 +170,6 @@ const showRadarList = ref(false)
 
 .config-row select {
   flex: 1;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  border: 1px solid var(--color-primary);
-  background: var(--color-secondary);
-  color: var(--color-text);
   font-size: 1rem;
   transition: all 0.2s ease;
   cursor: pointer;

@@ -46,7 +46,18 @@ export function message(title, body, options = {}) {
 export let sector = null;
 
 export const sectorFileAPI = {
-    async load(basePath = globalConfig.sector?.basePath, file = globalConfig.sector?.mainFile) {
+    async getSectors() {
+        try {
+            const res = await invoke('list_sector_files');
+            if (!res) return [];
+            return res
+        } catch (e) {
+            log.error('Failed to get sector files:', e);
+            return [];
+        }
+    },
+
+    async load(basePath = globalConfig.sector?.basePath, file = globalConfig.sector?.mainFile || 'main.json') {
         if (!basePath || !file) {
             log.warn('getSectorFileData called without basePath or file')
             return null;
