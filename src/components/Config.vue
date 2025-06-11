@@ -25,10 +25,20 @@
       </div>
       <hr class="config-separator" />
       <div class="config-row">
-        <div class="radar-list">
-          <template v-if="sector" v-for="(group, idx) in radarOptions" :key="idx">
-            <RadarGroup :group="group" />
-          </template>
+        <div class="radar-list-dropdown">
+          <button class="radar-list-toggle" @click="showRadarList = !showRadarList" :class="{ open: showRadarList }">
+            Radar Options
+            <span class="arrow" :class="{ open: showRadarList }">
+              <img src="/src/assets/arrow-up.svg" />
+            </span>
+          </button>
+          <transition name="radar-group-slide">
+            <div v-if="showRadarList" class="radar-list integrated">
+              <template v-if="sector" v-for="(group, idx) in radarOptions" :key="idx">
+                <RadarGroup :group="group" />
+              </template>
+            </div>
+          </transition>
         </div>
       </div>
     </div>
@@ -78,7 +88,7 @@ watchEffect(() => {
       sector.data.airspaces,
       {
         name: sector.data.navaids.name,
-        visible: true,
+        visible: sector.data.navaids.visible,
         data: [
           sector.data.navaids.data.VOR,
           sector.data.navaids.data.NDB,
@@ -91,6 +101,8 @@ watchEffect(() => {
     radarOptions.value = []
   }
 })
+
+const showRadarList = ref(false)
 </script>
 
 <style scoped>
@@ -157,41 +169,80 @@ watchEffect(() => {
   border-top: 1px solid var(--color-primary);
 }
 
-.radar-list {
-  display: flex;
-  flex-direction: column;
+.radar-list-dropdown {
   width: 100%;
+  position: relative;
+}
+.radar-list-toggle {
+  width: 100%;
+  min-height: 2.2rem;
+  padding: 0.2rem 0.5rem;
+  background: var(--color-secondary);
+  color: var(--color-text);
   border: 1px solid var(--color-primary);
   border-radius: 4px;
-  background-color: var(--color-secondary);
-  max-height: 200px;
-  overflow-y: auto;
-  /* Minimal scrollbar: só aparece no hover */
-  scrollbar-width: thin;
-  scrollbar-color: transparent transparent;
-  transition: box-shadow 0.2s;
+  font-size: 1rem;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background 0.2s, border-radius 0.2s, border-bottom 0.2s;
+  border-bottom: 1px solid var(--color-primary);
+  box-sizing: border-box;
 }
-.radar-list:hover {
-  scrollbar-color: var(--color-primary) transparent;
+.radar-list-toggle.open {
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
 }
-.radar-list::-webkit-scrollbar {
-  width: 6px;
-  background: transparent;
+.radar-list-toggle:hover {
+  background: var(--color-background);
 }
-.radar-list::-webkit-scrollbar-thumb {
-  background: var(--color-primary);
-  border-radius: 4px;
-  opacity: 0.5;
+.arrow {
+  margin-left: 0.5rem;
+  display: inline-block;
+  font-size: 0;
+  transition: transform 0.2s;
 }
-.radar-list::-webkit-scrollbar-track {
-  background: transparent;
+.arrow img {
+  width: 1.25rem;
+  height: 1.25rem;
+  transform: rotate(90deg);
+  transition: all 0.2s;
 }
-.radar-list:not(:hover)::-webkit-scrollbar-thumb {
-  background: transparent;
+.arrow.open img {
+  transform: rotate(180deg);
 }
-/* Corrige bug do overflow durante expansão dos grupos internos */
+.radar-list {
+  background: var(--color-secondary);
+  border: 1px solid var(--color-primary);
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  overflow: hidden;
+  transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4,0,0.2,1);
+  max-height: 500px;
+  opacity: 1;
+  margin-top: 0;
+  position: static;
+  z-index: 10;
+}
+.radar-list.integrated {
+  box-shadow: none;
+}
+.radar-list[style*='display: none'], .radar-list[style*='display:none'] {
+  max-height: 0 !important;
+  opacity: 0 !important;
+}
 .radar-group-slide-enter-active, .radar-group-slide-leave-active {
-  transition: max-height 0.5s ease, opacity 0.5s ease;
+  transition: max-height 0.5s cubic-bezier(0.4,0,0.2,1), opacity 0.5s cubic-bezier(0.4,0,0.2,1);
   overflow: hidden !important;
+}
+.radar-group-slide-enter-from, .radar-group-slide-leave-to {
+  max-height: 0;
+  opacity: 0;
+}
+.radar-group-slide-enter-to, .radar-group-slide-leave-from {
+  max-height: 500px;
+  opacity: 1;
 }
 </style>

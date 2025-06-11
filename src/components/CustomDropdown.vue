@@ -57,22 +57,22 @@ watch(open, (val) => {
   color: var(--color-text);
   font-size: 1rem;
   user-select: none;
-  min-height: 30px;
+  min-height: 2.2rem;
   display: flex;
   align-items: center;
   transition: all 0.2s ease;
 }
 
 .custom-dropdown:hover {
-  background: var(--color-secondary-hover);
+  background: var(--color-background);
 }
 
 .selected {
   display: flex;
   align-items: center;
   width: 100%;
-  height: 30px;
-  padding: 0 0.5rem;
+  height: 2.2rem;
+  padding: 0.2rem 0.5rem;
   box-sizing: border-box;
   justify-content: space-between;
 }
@@ -89,25 +89,27 @@ watch(open, (val) => {
   margin-left: 0.5rem;
 }
 .dropdown-arrow img {
-  width: 18px;
-  height: 18px;
+  width: 1.25rem;
+  height: 1.25rem;
   display: flex;
   transition: all 0.2s ease;
+  transform: rotate(90deg);
 }
 .dropdown-arrow.open img {
-  transform: scale(1.3) rotate(-180deg);
+  transform: rotate(180deg);
 }
 
 .custom-dropdown:hover .dropdown-arrow:not(.open) img {
-  transform: scale(1.3) rotate(-90deg);
+  transform: scale(1.1) rotate(90deg);
 }
 
 .dropdown-list {
   position: absolute;
   left: 0; right: 0; top: 100%;
-  background: var(--color-surface);
+  background: var(--color-secondary);
   border: 1px solid var(--color-primary);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border-top: none;
+  box-shadow: none;
   border-radius: 0 0 4px 4px;
   z-index: 10;
   margin: 0;
@@ -121,7 +123,9 @@ watch(open, (val) => {
   transition: background 0.2s;
   display: flex;
   align-items: center;
-  min-height: 32px;
+  min-height: 2.2rem;
+  background: var(--color-secondary);
+  color: var(--color-text);
 }
 
 .dropdown-list li.selected {
