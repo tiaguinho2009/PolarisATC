@@ -3,6 +3,7 @@ import { onMounted, ref, onBeforeUnmount } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { globalConfig, log, sectorFileAPI, sector } from '../API.js'
 import { radarEvents, uiEvents } from '../events'
+import { image } from '@tauri-apps/api'
 
 const radar = ref(null)
 let ctx, colorScheme = {}
@@ -413,8 +414,8 @@ onMounted(async () => {
         log.warn('Error loading sector', e)
     }
     const sector = {
-            basePath: '/LPPO/'
-        }
+        basePath: '/LPPO/'
+    }
     //globalConfig.setSector(sector)
 })
 
@@ -490,7 +491,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-<canvas ref="radar" class="radar-canvas" :style="{ background: colorScheme.background || 'var(--color-background)' }"></canvas>
+    <canvas ref="radar" class="radar-canvas"
+        :style="{ background: colorScheme.background || 'var(--color-background)' }"></canvas>
 </template>
 
 <style scoped>
