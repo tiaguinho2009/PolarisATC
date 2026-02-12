@@ -8,7 +8,7 @@
     }" @mousedown="bringToFront">
 
         <div ref="headerRef" class="window-header" @mousedown.stop.prevent="startDrag">
-            <span class="window-title">{{ title }}</span>
+            <span class="window-title">{{ window.title }}</span>
             <div class="window-buttons">
                 <button @click="toggleCollapse">{{ collapsed ? '▼' : '▲' }}</button>
                 <button @click="$emit('close')">✕</button>
@@ -23,6 +23,7 @@
 
 <script setup lang="ts">
 import { reactive, ref } from "vue";
+import type { WindowModel } from "../../utils/WindowModel";
 
 interface Position {
     x: number;
@@ -30,14 +31,11 @@ interface Position {
 }
 
 const props = defineProps<{
-    title: string;
-    width?: number;
-    height?: number;
-    zIndex?: number;
-}>();
+    window: WindowModel;
+}>()
 
-const width = props.width || 300;
-const height = props.height || 200;
+const width = props.window.size.width || 300;
+const height = props.window.size.height || 200;
 const headerHeight = 30;
 
 const position = reactive<Position>({ x: 50, y: 50 });
@@ -45,7 +43,7 @@ const collapsed = ref(false);
 let isDragging = false;
 let offsetX = 0;
 let offsetY = 0;
-let zIndex = ref(props.zIndex || 1);
+let zIndex = ref(props.window.zIndex || 1);
 
 const headerRef = ref<HTMLElement | null>(null);
 

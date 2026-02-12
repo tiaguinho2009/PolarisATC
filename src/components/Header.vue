@@ -15,14 +15,32 @@
         </div>
 
         <div class="header-group right">
-            <div class="header-item clickable">
+            <div class="header-item clickable" @click="openSettings">
                 Settings
+            </div>
+            <div class="header-item clickable" @click="appWindow.minimize()">
+                -
+            </div>
+            <div class="header-item clickable" @click="appWindow.toggleMaximize()">
+                []
+            </div>
+            <div class="header-item clickable close" @click="appWindow.close()">
+                ✕
             </div>
         </div>
     </header>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { windowManager } from '../utils/WindowManager';
+
+const appWindow = getCurrentWindow();
+
+function openSettings() {
+    windowManager.createWindow("Settings", 400, 300);
+}
+</script>
 
 <style scoped>
 .header {
@@ -74,8 +92,10 @@
 }
 
 .clickable:hover {
-    background: color-mix(in srgb,
-            var(--ui-secondary) 15%,
-            transparent);
+    background: var(--ui-secondary);
+}
+
+.clickable.close:hover {
+    background: var(--ui-danger);
 }
 </style>
