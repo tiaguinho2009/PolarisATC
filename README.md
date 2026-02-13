@@ -8,6 +8,7 @@
 ![Tauri](https://img.shields.io/badge/Tauri-2.x-ffc131?style=flat-square&logo=tauri&logoColor=black)
 ![PixiJS](https://img.shields.io/badge/Pixi.js-8.x-e2212d?style=flat-square)
 ![License](https://img.shields.io/badge/license-AGPL--3.0-green?style=flat-square)
+![Discord](https://img.shields.io/discord/1379563165813182515?style=flat-square&label=Discord&link=https%3A%2F%2Fdiscord.com%2Finvite%2FXkwmWnYB)
 
 **A modern, high-performance Air Traffic Control radar application built as a standalone desktop app.**
 
@@ -59,6 +60,11 @@ The radar is rendered using **Pixi.js**, allowing smooth, GPU-accelerated visual
 
 - **Rust**
 - **Tauri**
+
+---
+
+## Join our Support/Community Server
+https://discord.com/invite/XkwmWnYB
 
 ---
 
