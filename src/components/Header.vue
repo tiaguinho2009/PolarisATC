@@ -32,10 +32,8 @@
 </template>
 
 <script setup lang="ts">
-import { getCurrentWindow } from '@tauri-apps/api/window';
+import { appWindow } from "../platform"
 import { windowManager } from '../utils/WindowManager';
-
-const appWindow = getCurrentWindow();
 
 function openSettings() {
     windowManager.createWindow("Settings", 400, 300);

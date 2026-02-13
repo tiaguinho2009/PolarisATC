@@ -11,6 +11,7 @@
     "tauri:dev:linux-nvidia": "WEBKIT_DISABLE_COMPOSITING_MODE=1 WEBKIT_DISABLE_DMABUF_RENDERER=1 __NV_DISABLE_EXPLICIT_SYNC=1 tauri dev"
   },
   "dependencies": {
+    "@tauri-apps/plugin-updater": "^2.10.0",
     "pinia": "^3.0.4",
     "pixi.js": "^8.16.0",
     "vue": "^3.5.24"

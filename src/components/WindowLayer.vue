@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue"
-import { windowManager } from "../../utils/WindowManager"
-import Window from "./Window.vue"
+import { windowManager } from "../utils/WindowManager"
+import Window from "./presets/Window.vue"
 
 const windows = computed(() => windowManager.windows.value)
 </script>

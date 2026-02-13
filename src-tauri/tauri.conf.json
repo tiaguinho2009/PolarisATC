@@ -1,8 +1,9 @@
 {
 	"$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
 	"productName": "polarisatc",
-	"version": "0.1.0",
-	"identifier": "com.tauri.dev",
+	"version": "../package.json",
+	"identifier": "com.tico09.polarisatc",
+	"mainBinaryName": "PolarisATC",
 	"build": {
 		"frontendDist": "../dist",
 		"devUrl": "http://localhost:5173",
@@ -11,14 +12,14 @@
 	},
 	"app": {
 		"windows": [
-		{
-			"title": "Polaris ATC",
-			"maximized": true,
-			"resizable": true,
-			"fullscreen": false,
-			"decorations": false,
-			"hiddenTitle": true
-		}
+			{
+				"title": "Polaris ATC",
+				"maximized": true,
+				"resizable": true,
+				"fullscreen": false,
+				"decorations": false,
+				"hiddenTitle": true
+			}
 		],
 		"security": {
 			"csp": null
@@ -26,7 +27,23 @@
 	},
 	"bundle": {
 		"active": true,
-		"targets": "all",
+		"targets": ["nsis", "deb", "appimage"],
+		"licenseFile": "../LICENSE",
+		"copyright": "tico09.com",
+		"linux": {
+			"appimage": {
+				"bundleMediaFramework": false,
+				"files": {}
+			},
+			"deb": {
+				"files": {}
+			},
+			"rpm": {
+				"epoch": 0,
+				"files": {},
+				"release": "1"
+			}
+		},
 		"icon": [
 		"icons/32x32.png",
 		"icons/128x128.png",
@@ -34,5 +51,16 @@
 		"icons/icon.icns",
 		"icons/icon.ico"
 		]
+	},
+	"plugins": {
+		"updater": {
+			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IERBNEI5OERGOUYwNERBMTQKUldRVTJnU2YzNWhMMnAya2RSU0RMNE9RL2ltV05xVjUzUUgvMUI0M2VjUlVMSTNSRFNZUm50TnQK",
+			"endpoints": [
+				"https://github.com/tiaguinho2009/PolarisATC/releases/latest/download/latest.json"
+			],
+			"windows": {
+				"installMode": "passive"
+			}
+		}
 	}
 }
