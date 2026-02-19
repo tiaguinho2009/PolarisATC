@@ -1,9 +1,9 @@
 [package]
-name = "app"
+name = "PolarisATC"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
+description = ""
+authors = ["tiaguinho2009"]
+license = "AGPL-V3"
 repository = ""
 edition = "2021"
 rust-version = "1.77.2"

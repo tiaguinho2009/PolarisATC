@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import { appWindow } from "../platform"
-import { windowManager } from '../utils/WindowManager';
+import { windowManager } from '../main';
 
 function openSettings() {
     windowManager.createWindow("Settings", 400, 300);

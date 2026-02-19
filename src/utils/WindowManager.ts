@@ -1,7 +1,7 @@
 import { ref } from "vue";
 import { WindowModel } from "./WindowModel";
 
-class WindowManager {
+export default class WindowManager {
 	private nextId = 1;
 	private topZIndex = 10;
 
@@ -28,5 +28,3 @@ class WindowManager {
 		window.zIndex = this.topZIndex++;
 	}
 }
-
-export const windowManager = new WindowManager();

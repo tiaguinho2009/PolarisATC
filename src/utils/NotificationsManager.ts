@@ -1,5 +1,3 @@
-class NotificationsManager {
-
+export default class NotificationsManager {
+    
 }
-
-export const notificationsManager = new NotificationsManager();
